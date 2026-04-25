@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>后台管理</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=Outfit:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/assets/styles.css" />
+  </head>
+  <body class="page-admin">
+    <div class="background-grid"></div>
+    <main class="shell">
+      <section class="panel import-hero">
+        <a class="ghost-link" href="/review-import">返回导入页</a>
+        <p class="eyebrow">Admin Dashboard</p>
+        <h1>校园口碑库后台</h1>
+        <p class="hero-text">查看同学共建的评价记录、店铺基础信息缓存，以及当前已生成的分析结果。</p>
+      </section>
+
+      <section class="admin-layout">
+        <article class="panel admin-panel">
+          <div class="panel-header compact-header">
+            <p class="eyebrow">Imported Restaurants</p>
+            <h2>已收录评价的店铺</h2>
+          </div>
+          <div id="admin-restaurants" class="admin-list"></div>
+        </article>
+
+        <article class="panel admin-panel">
+          <div class="panel-header compact-header">
+            <p class="eyebrow">Recent Review Records</p>
+            <h2>最近收录的评价</h2>
+          </div>
+          <div id="admin-reviews" class="admin-list"></div>
+        </article>
+
+        <article class="panel admin-panel">
+          <div class="panel-header compact-header">
+            <p class="eyebrow">Cached Restaurants</p>
+            <h2>已缓存店铺基础信息</h2>
+          </div>
+          <div id="admin-cached-restaurants" class="admin-list"></div>
+        </article>
+
+        <article class="panel admin-panel">
+          <div class="panel-header compact-header">
+            <p class="eyebrow">Analysis Cache</p>
+            <h2>已缓存口碑分析结果</h2>
+          </div>
+          <div id="admin-analysis-caches" class="admin-list"></div>
+        </article>
+      </section>
+    </main>
+
+    <script src="/assets/admin.js"></script>
+  </body>
+</html>

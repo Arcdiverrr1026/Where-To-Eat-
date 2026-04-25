@@ -1,0 +1,10 @@
+  你本地现在可以直接这样跑：
+
+  cd "/Users/arcdiverrr/python program/where to eat"
+  ./.venv/bin/uvicorn app.main:app --reload
+
+  然后打开：
+
+  - http://127.0.0.1:8000/
+  - http://127.0.0.1:8000/recommendations?...
+  - http://127.0.0.1:8000/restaurant-view?id=r001
