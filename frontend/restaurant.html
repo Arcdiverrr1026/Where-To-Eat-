@@ -21,39 +21,46 @@
       <section class="detail-grid" id="detail-grid"></section>
       <section class="panel" style="margin-top: 20px">
         <div class="panel-header compact-header">
-          <p class="eyebrow">Real Feedback</p>
-          <h2>写下你的真实评价，和同学一起共建口碑库</h2>
+          <p class="eyebrow">Campus Comments</p>
+          <h2>大家的真实评论</h2>
+        </div>
+        <div id="public-reviews" class="admin-list"></div>
+      </section>
+      <section class="panel" style="margin-top: 20px">
+        <div class="panel-header compact-header">
+          <p class="eyebrow">Leave A Comment</p>
+          <h2>写下你的评论</h2>
         </div>
         <form id="feedback-form" class="import-form">
           <div class="field-group">
-            <span class="field-label">打分</span>
+            <span class="field-label">这家店你怎么打</span>
             <div class="chip-grid compact" data-group="feedback-rating">
-              <label class="chip"><input type="radio" name="rating" value="1" required />1分</label>
-              <label class="chip"><input type="radio" name="rating" value="2" />2分</label>
-              <label class="chip"><input type="radio" name="rating" value="3" checked />3分</label>
-              <label class="chip"><input type="radio" name="rating" value="4" />4分</label>
-              <label class="chip"><input type="radio" name="rating" value="5" />5分</label>
+              <label class="chip"><input type="radio" name="rating" value="1" />拉完了</label>
+              <label class="chip"><input type="radio" name="rating" value="2" />NPC</label>
+              <label class="chip"><input type="radio" name="rating" value="3" checked />人上人</label>
+              <label class="chip"><input type="radio" name="rating" value="4" />顶级</label>
+              <label class="chip"><input type="radio" name="rating" value="5" />夯</label>
             </div>
           </div>
           <div class="field-group">
-            <label for="feedback-content">你的评价</label>
-            <textarea id="feedback-content" class="import-textarea" placeholder="例如：晚上排队久，但味道稳定，适合宿舍聚餐。" required></textarea>
+            <label for="feedback-content">你的评论</label>
+            <textarea id="feedback-content" class="import-textarea" placeholder="例如：晚上有点排队，但分量可以，适合和同学一起去。" required></textarea>
           </div>
           <div class="field-group">
             <div class="detail-block" style="padding: 16px 18px">
-              <p class="eyebrow">Why Your Feedback Matters</p>
-              <h2 style="font-size: 1.05rem">这条评价会直接影响什么</h2>
+              <p class="eyebrow">How It Works</p>
+              <h2 style="font-size: 1.05rem">现在先做最简单的评论共建</h2>
               <ul class="reason-list">
-                <li>会立刻计入这家店的近期口碑与避雷分析</li>
-                <li>会影响后续同学看到的推荐排序和风险标签</li>
-                <li>评价越真实，整个校园口碑库越有参考价值</li>
+                <li>任何人都可以直接提交一条真实评论</li>
+                <li>评论提交后会立刻展示给后来的人看</li>
+                <li>打分和更复杂的排序规则放到下一阶段再做</li>
               </ul>
             </div>
           </div>
           <div class="import-actions">
-            <button id="feedback-submit" class="primary-button" type="submit">提交真实评价</button>
+            <button id="feedback-submit" class="primary-button" type="submit">发布评论</button>
           </div>
-          <div id="feedback-result" class="status-line">提交后会立即重算这家店的评价结果，并更新口碑判断。</div>
+          <div id="feedback-result" class="status-line">提交后会立即出现在这家店的评论区里。</div>
         </form>
       </section>
     </main>

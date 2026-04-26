@@ -334,6 +334,12 @@ textarea {
   padding: 22px;
 }
 
+.admin-toolbar {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
 .restaurant-list {
   display: grid;
   gap: 16px;
@@ -435,6 +441,17 @@ textarea {
   padding: 0 18px;
   background: rgba(42, 31, 18, 0.08);
   color: var(--text);
+}
+
+.danger-button {
+  justify-self: start;
+  background: rgba(182, 70, 31, 0.14);
+  color: var(--accent-deep);
+}
+
+.danger-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .detail-grid {

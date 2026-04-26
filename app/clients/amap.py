@@ -17,10 +17,14 @@ class AmapRestaurantCandidate:
     distance_meters: int
     lng: float | None = None
     lat: float | None = None
+    walking_minutes: int | None = None
+    riding_minutes: int | None = None
 
 
 class AmapClient:
     base_url = "https://restapi.amap.com/v5/place/around"
+    walking_route_url = "https://restapi.amap.com/v3/direction/walking"
+    riding_route_url = "https://restapi.amap.com/v4/direction/bicycling"
 
     def __init__(self) -> None:
         self.api_key = settings.amap_api_key
@@ -69,19 +73,33 @@ class AmapClient:
         for poi in pois:
             if not isinstance(poi, dict):
                 continue
-            candidates.append(
-                AmapRestaurantCandidate(
-                    source_id=poi.get("id", ""),
-                    name=poi.get("name", "未知店铺"),
-                    category=keyword,
-                    address=poi.get("address", "地址待补充"),
-                    avg_price=self._extract_price(poi),
-                    business_hours=self._extract_business_hours(poi),
-                    distance_meters=self._extract_distance(poi),
-                    lng=self._extract_lng(poi),
-                    lat=self._extract_lat(poi),
-                )
+            candidate = AmapRestaurantCandidate(
+                source_id=poi.get("id", ""),
+                name=poi.get("name", "未知店铺"),
+                category=keyword,
+                address=poi.get("address", "地址待补充"),
+                avg_price=self._extract_price(poi),
+                business_hours=self._extract_business_hours(poi),
+                distance_meters=self._extract_distance(poi),
+                lng=self._extract_lng(poi),
+                lat=self._extract_lat(poi),
             )
+            if candidate.lng is not None and candidate.lat is not None:
+                candidate.walking_minutes = self._estimate_route_minutes(
+                    origin_lat=lat,
+                    origin_lng=lng,
+                    destination_lat=candidate.lat,
+                    destination_lng=candidate.lng,
+                    mode="walking",
+                )
+                candidate.riding_minutes = self._estimate_route_minutes(
+                    origin_lat=lat,
+                    origin_lng=lng,
+                    destination_lat=candidate.lat,
+                    destination_lng=candidate.lng,
+                    mode="riding",
+                )
+            candidates.append(candidate)
         return candidates
 
     def _extract_price(self, poi: dict) -> int:
@@ -133,3 +151,73 @@ class AmapClient:
             return float(parts[0]), float(parts[1])
         except ValueError:
             return None, None
+
+    def _estimate_route_minutes(
+        self,
+        *,
+        origin_lat: float,
+        origin_lng: float,
+        destination_lat: float,
+        destination_lng: float,
+        mode: str,
+    ) -> int | None:
+        if not self.is_configured():
+            return None
+
+        params = {
+            "key": self.api_key,
+            "origin": f"{origin_lng},{origin_lat}",
+            "destination": f"{destination_lng},{destination_lat}",
+        }
+        target_url = self.walking_route_url if mode == "walking" else self.riding_route_url
+
+        with httpx.Client(timeout=10.0) as client:
+            try:
+                response = client.get(target_url, params=params)
+                response.raise_for_status()
+                payload = response.json()
+            except (httpx.HTTPError, JSONDecodeError, ValueError):
+                return None
+
+        duration_seconds = self._extract_route_duration_seconds(payload, mode)
+        if duration_seconds is None:
+            return None
+        return max(1, round(duration_seconds / 60))
+
+    def _extract_route_duration_seconds(self, payload: dict, mode: str) -> int | None:
+        if not isinstance(payload, dict):
+            return None
+
+        if mode == "walking":
+            route = payload.get("route", {})
+            if not isinstance(route, dict):
+                return None
+            paths = route.get("paths", [])
+            if not isinstance(paths, list) or not paths:
+                return None
+            path = paths[0]
+            if not isinstance(path, dict):
+                return None
+            duration = path.get("duration")
+            return self._normalize_duration(duration)
+
+        data = payload.get("data", {})
+        if not isinstance(data, dict):
+            return None
+        paths = data.get("paths", [])
+        if not isinstance(paths, list) or not paths:
+            return None
+        path = paths[0]
+        if not isinstance(path, dict):
+            return None
+        duration = path.get("duration")
+        return self._normalize_duration(duration)
+
+    def _normalize_duration(self, duration: object) -> int | None:
+        if isinstance(duration, (int, float)):
+            return int(duration)
+        if isinstance(duration, str):
+            normalized = duration.strip()
+            if normalized.isdigit():
+                return int(normalized)
+        return None

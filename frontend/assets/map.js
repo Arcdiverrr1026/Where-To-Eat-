@@ -34,18 +34,19 @@ function renderSelection(item) {
     <div class="card-top">
       <div class="card-title-wrap">
         <h3>${item.name}</h3>
-        <p class="card-meta">${item.distance_text} · 人均 ${item.avg_price} 元</p>
+        <p class="card-meta">${item.travel_text} · 人均 ${item.avg_price} 元 · ${item.review_count} 条评论</p>
       </div>
       <div class="score-badge score-badge-soft">
-        <span>综合分</span>
-        <strong>${item.final_score}</strong>
+        <span>最近风向</span>
+        <strong style="font-size:1rem">${item.comment_tone}</strong>
       </div>
     </div>
     <div class="tag-row" style="margin-top:14px">
+      <span class="filter-pill">${item.comment_tone}</span>
       ${item.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}
       ${item.risk_flags.map((tag) => `<span class="risk">${tag}</span>`).join("")}
     </div>
-    <p style="margin-top:14px">${item.summary}</p>
+    <p style="margin-top:14px"><strong>大家最近在说：</strong>${item.summary}</p>
     <div class="card-actions" style="margin-top:16px">
       <a class="secondary-button" href="${detailHref(item.restaurant_id)}">查看详情</a>
       <a class="secondary-button" href="/recommendations?${mapParams.toString()}">回到榜单</a>
@@ -61,9 +62,9 @@ function renderRestaurantList(restaurants) {
           <div class="map-list-index">${index + 1}</div>
           <div class="map-list-copy">
             <strong>${item.name}</strong>
-            <span>${item.distance_text} · 人均 ${item.avg_price} 元</span>
+            <span>${item.travel_text} · ${item.review_count} 条评论 · ${item.comment_tone}</span>
           </div>
-          <div class="map-list-score">${item.final_score}</div>
+          <div class="map-list-score">${item.review_count}</div>
         </button>
       `
     )
@@ -100,7 +101,7 @@ function updateMapSelection(restaurant) {
   infoWindow.setContent(`
     <div class="map-info-window">
       <strong>${restaurant.name}</strong>
-      <p>${restaurant.distance_text} · 人均 ${restaurant.avg_price} 元 · 综合分 ${restaurant.final_score}</p>
+      <p>${restaurant.travel_text} · 人均 ${restaurant.avg_price} 元 · ${restaurant.review_count} 条评论</p>
     </div>
   `);
   infoWindow.open(mapInstance, [restaurant.lng, restaurant.lat]);
@@ -242,10 +243,10 @@ async function fetchMapRestaurants() {
       return;
     }
     currentRestaurants = [...data.list].sort(
-      (a, b) => a.distance_meters - b.distance_meters || b.final_score - a.final_score
+      (a, b) => a.distance_meters - b.distance_meters || b.review_count - a.review_count
     );
     activeRestaurantId = currentRestaurants[0].restaurant_id;
-    mapStatus.textContent = `已展示 ${currentRestaurants.length} 家餐厅的真实位置`;
+    mapStatus.textContent = `已展示 ${currentRestaurants.length} 家店的位置和评论概况`;
     renderRestaurantList(currentRestaurants);
     renderSelection(currentRestaurants[0]);
     renderRealMap(currentRestaurants, payload, mapConfig);

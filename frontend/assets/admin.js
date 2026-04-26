@@ -1,7 +1,8 @@
 const restaurantsNode = document.getElementById("admin-restaurants");
 const reviewsNode = document.getElementById("admin-reviews");
 const cachedRestaurantsNode = document.getElementById("admin-cached-restaurants");
-const analysisCachesNode = document.getElementById("admin-analysis-caches");
+const resetButton = document.getElementById("reset-trial-data");
+const resetFeedbackNode = document.getElementById("reset-feedback");
 
 function renderRestaurantList(items) {
   if (!items.length) {
@@ -46,7 +47,7 @@ function renderReviewList(items) {
           <div class="card-top">
             <div class="card-title-wrap">
               <h3>${item.restaurant_id}</h3>
-              <p class="card-meta">评分 ${item.rating} · ${item.created_at || "未知时间"}</p>
+              <p class="card-meta">${item.created_at || "未知时间"} · 这条评价：${item.rating}</p>
             </div>
             <div class="score-badge">
               <span>距今天</span>
@@ -92,51 +93,10 @@ function renderCachedRestaurantList(items) {
     .join("");
 }
 
-function renderAnalysisCacheList(items) {
-  if (!items.length) {
-    analysisCachesNode.innerHTML = `<article class="restaurant-card empty-state"><p class="card-meta">还没有生成任何口碑分析结果。</p></article>`;
-    return;
-  }
-
-  analysisCachesNode.innerHTML = items
-    .map((item) => {
-      const tags = item.tags.length
-        ? item.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")
-        : `<span class="card-meta">暂无标签</span>`;
-      const risks = item.risk_flags.length
-        ? item.risk_flags.map((risk) => `<span class="risk">${risk}</span>`).join("")
-        : `<span class="card-meta">暂无风险标记</span>`;
-
-      return `
-        <article class="restaurant-card">
-          <div class="card-top">
-            <div class="card-title-wrap">
-              <h3>${item.restaurant_name}</h3>
-              <p class="card-meta">${item.restaurant_id}${item.restaurant_category ? ` · ${item.restaurant_category}` : ""}</p>
-            </div>
-            <div class="score-badge">
-              <span>口碑分</span>
-              <strong>${item.final_score}</strong>
-            </div>
-          </div>
-          <p class="card-meta">评价来源：${item.review_source} · 评价数：${item.review_count} · 更新时间：${item.updated_at || "未知"}</p>
-          <div class="tag-row">${tags}</div>
-          <div class="tag-row">${risks}</div>
-          <div class="card-actions">
-            <a class="secondary-button" href="/restaurant-view?id=${item.restaurant_id}">查看详情</a>
-            <a class="secondary-button" href="/review-import?id=${item.restaurant_id}">补录历史评论</a>
-          </div>
-        </article>
-      `;
-    })
-    .join("");
-}
-
 async function fetchDashboard() {
   restaurantsNode.innerHTML = `<article class="restaurant-card loading-card"><div class="skeleton skeleton-line short"></div><div class="skeleton skeleton-line long"></div></article>`;
   reviewsNode.innerHTML = `<article class="restaurant-card loading-card"><div class="skeleton skeleton-line short"></div><div class="skeleton skeleton-line long"></div></article>`;
   cachedRestaurantsNode.innerHTML = `<article class="restaurant-card loading-card"><div class="skeleton skeleton-line short"></div><div class="skeleton skeleton-line long"></div></article>`;
-  analysisCachesNode.innerHTML = `<article class="restaurant-card loading-card"><div class="skeleton skeleton-line short"></div><div class="skeleton skeleton-line long"></div></article>`;
 
   try {
     const response = await fetch("/api/admin/dashboard");
@@ -145,13 +105,39 @@ async function fetchDashboard() {
     renderRestaurantList(data.imported_restaurants);
     renderReviewList(data.recent_reviews);
     renderCachedRestaurantList(data.cached_restaurants);
-    renderAnalysisCacheList(data.analysis_caches);
   } catch (error) {
     restaurantsNode.innerHTML = `<article class="restaurant-card empty-state"><p class="risk">后台数据加载失败。</p></article>`;
     reviewsNode.innerHTML = `<article class="restaurant-card empty-state"><p class="risk">后台数据加载失败。</p></article>`;
     cachedRestaurantsNode.innerHTML = `<article class="restaurant-card empty-state"><p class="risk">后台数据加载失败。</p></article>`;
-    analysisCachesNode.innerHTML = `<article class="restaurant-card empty-state"><p class="risk">后台数据加载失败。</p></article>`;
   }
+}
+
+async function resetTrialData() {
+  if (!resetButton) return;
+
+  const confirmed = window.confirm(
+    "确认清空当前试运行数据吗？这会删除历史导入评价和餐厅缓存。"
+  );
+  if (!confirmed) return;
+
+  resetButton.disabled = true;
+  resetFeedbackNode.textContent = "正在清空试运行数据...";
+
+  try {
+    const response = await fetch("/api/admin/reset-data", { method: "POST" });
+    if (!response.ok) throw new Error("reset_failed");
+    const data = await response.json();
+    resetFeedbackNode.textContent = `${data.message} 已清空 ${data.cleared_reviews} 条评价和 ${data.cleared_restaurants} 条餐厅缓存。`;
+    await fetchDashboard();
+  } catch (error) {
+    resetFeedbackNode.textContent = "清空失败，请稍后重试。";
+  } finally {
+    resetButton.disabled = false;
+  }
+}
+
+if (resetButton) {
+  resetButton.addEventListener("click", resetTrialData);
 }
 
 fetchDashboard();

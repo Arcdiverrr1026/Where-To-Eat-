@@ -36,11 +36,22 @@ class ReviewSourceService:
         self.store.replace_reviews(restaurant_id, reviews)
         return reviews
 
+    def fetch_public_reviews(self, restaurant_id: str) -> list[dict]:
+        return [
+            {
+                "rating": int(item.get("rating", 3)),
+                "content": item["content"],
+                "created_at": item.get("created_at"),
+                "days_ago": int(item.get("days_ago", 0)),
+            }
+            for item in self.store.fetch_reviews(restaurant_id)
+        ]
+
     def submit_feedback(
         self,
         *,
         restaurant_id: str,
-        rating: int,
+        rating: int = 3,
         content: str,
     ) -> dict:
         review = self._normalize_review(
@@ -78,5 +89,4 @@ class ReviewSourceService:
         return {
             "imported_restaurants": self.store.list_imported_restaurants(),
             "recent_reviews": self.store.list_recent_reviews(),
-            "analysis_caches": self.store.list_analysis_cache_records(),
         }

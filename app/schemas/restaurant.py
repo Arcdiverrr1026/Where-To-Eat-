@@ -30,8 +30,10 @@ class RestaurantCard(BaseModel):
     lat: float
     distance_meters: int
     distance_text: str
+    travel_text: str
     avg_price: int
-    final_score: int
+    review_count: int
+    comment_tone: str
     tags: list[str]
     risk_flags: list[str]
     summary: str
@@ -42,12 +44,11 @@ class RestaurantRecommendationResponse(BaseModel):
     list: list[RestaurantCard]
 
 
-class ScoreBreakdown(BaseModel):
-    reputation: int
-    authenticity: int
-    student_fit: int
-    stability: int
-    final: int
+class RestaurantReviewItem(BaseModel):
+    rating: int
+    content: str
+    created_at: str | None = None
+    days_ago: int
 
 
 class RestaurantDetailResponse(BaseModel):
@@ -60,16 +61,17 @@ class RestaurantDetailResponse(BaseModel):
     address: str
     distance_meters: int
     distance_text: str
+    travel_text: str
     avg_price: int
     business_hours: str
-    scores: ScoreBreakdown
     tags: list[str]
     risk_flags: list[str]
-    recommend_reasons: list[str]
-    warning_points: list[str]
-    recent_review_summary: list[str]
-    popular_dishes: list[str]
-    common_negatives: list[str]
+    comment_highlights: list[str]
+    caution_notes: list[str]
+    comment_overview: list[str]
+    reviews: list[RestaurantReviewItem]
+    highlighted_items: list[str]
+    caution_items: list[str]
     scene_fit: dict[str, str]
 
 
@@ -88,7 +90,7 @@ class ReviewImportResponse(BaseModel):
 
 class ReviewFeedbackRequest(BaseModel):
     restaurant_id: str = Field(..., description="Target restaurant id")
-    rating: int = Field(..., ge=1, le=5, description="User rating from 1 to 5")
+    rating: int = Field(3, ge=1, le=5, description="Optional rating placeholder")
     content: str = Field(..., min_length=2, description="Short user feedback")
 
 
@@ -97,6 +99,12 @@ class ReviewFeedbackResponse(BaseModel):
     review_source: str
     review_count: int
     sample_review: str
+
+
+class ResetTrialDataResponse(BaseModel):
+    cleared_reviews: int
+    cleared_restaurants: int
+    message: str
 
 
 class ImportedRestaurantSummary(BaseModel):
@@ -125,20 +133,7 @@ class CachedRestaurantRecord(BaseModel):
     updated_at: str | None = None
 
 
-class AnalysisCacheRecord(BaseModel):
-    restaurant_id: str
-    restaurant_name: str
-    restaurant_category: str | None = None
-    review_source: str
-    review_count: int
-    final_score: int
-    tags: list[str]
-    risk_flags: list[str]
-    updated_at: str | None = None
-
-
 class AdminDashboardResponse(BaseModel):
     imported_restaurants: list[ImportedRestaurantSummary]
     recent_reviews: list[ImportedReviewRecord]
     cached_restaurants: list[CachedRestaurantRecord]
-    analysis_caches: list[AnalysisCacheRecord]

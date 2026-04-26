@@ -4,6 +4,7 @@ from app.core.config import settings
 from app.schemas.restaurant import (
     AdminDashboardResponse,
     RestaurantDetailResponse,
+    ResetTrialDataResponse,
     ReviewFeedbackRequest,
     ReviewFeedbackResponse,
     RestaurantRecommendationRequest,
@@ -58,6 +59,11 @@ def submit_review_feedback(payload: ReviewFeedbackRequest) -> ReviewFeedbackResp
 @router.get("/admin/dashboard", response_model=AdminDashboardResponse)
 def admin_dashboard() -> AdminDashboardResponse:
     return service.get_admin_dashboard()
+
+
+@router.post("/admin/reset-data", response_model=ResetTrialDataResponse)
+def reset_trial_data() -> ResetTrialDataResponse:
+    return service.reset_trial_data()
 
 
 @router.get("/client-config/map")

@@ -18,8 +18,16 @@
       <section class="panel import-hero">
         <a class="ghost-link" href="/review-import">返回导入页</a>
         <p class="eyebrow">Admin Dashboard</p>
-        <h1>校园口碑库后台</h1>
-        <p class="hero-text">查看同学共建的评价记录、店铺基础信息缓存，以及当前已生成的分析结果。</p>
+        <h1>校园评论后台</h1>
+        <p class="hero-text">查看同学共建的评论记录、店铺基础信息缓存，以及当前评论覆盖情况。</p>
+        <div class="admin-toolbar">
+          <button id="reset-trial-data" class="secondary-button danger-button" type="button">
+            清空试运行数据
+          </button>
+          <p id="reset-feedback" class="card-meta">
+            会清空历史导入评价和已缓存餐厅信息，适合开始新一轮评论采样前使用。
+          </p>
+        </div>
       </section>
 
       <section class="admin-layout">
@@ -45,14 +53,6 @@
             <h2>已缓存店铺基础信息</h2>
           </div>
           <div id="admin-cached-restaurants" class="admin-list"></div>
-        </article>
-
-        <article class="panel admin-panel">
-          <div class="panel-header compact-header">
-            <p class="eyebrow">Analysis Cache</p>
-            <h2>已缓存口碑分析结果</h2>
-          </div>
-          <div id="admin-analysis-caches" class="admin-list"></div>
         </article>
       </section>
     </main>

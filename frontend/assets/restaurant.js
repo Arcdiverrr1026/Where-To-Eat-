@@ -9,7 +9,16 @@ const feedbackForm = document.getElementById("feedback-form");
 const feedbackContent = document.getElementById("feedback-content");
 const feedbackResult = document.getElementById("feedback-result");
 const feedbackSubmit = document.getElementById("feedback-submit");
+const publicReviewsNode = document.getElementById("public-reviews");
 const feedbackChipGroups = document.querySelectorAll('[data-group="feedback-rating"]');
+
+const RATING_LABELS = {
+  1: "不推荐",
+  2: "一般般",
+  3: "还行可吃",
+  4: "挺推荐",
+  5: "夯到拉完了",
+};
 
 function listMarkup(items, className = "reason-list") {
   return `<ul class="${className}">${items.map((item) => `<li>${item}</li>`).join("")}</ul>`;
@@ -31,6 +40,33 @@ feedbackChipGroups.forEach((group) => {
   });
 });
 
+function renderPublicReviews(items) {
+  if (!items.length) {
+    publicReviewsNode.innerHTML = `<article class="restaurant-card empty-state"><p class="card-meta">这家店还没有公开评论，你可以写下第一条。</p></article>`;
+    return;
+  }
+
+  publicReviewsNode.innerHTML = items
+    .map(
+      (item) => `
+        <article class="restaurant-card">
+          <div class="card-top">
+            <div class="card-title-wrap">
+              <h3>匿名同学</h3>
+              <p class="card-meta">${item.created_at || "未知时间"} · 距今 ${item.days_ago} 天</p>
+            </div>
+            <div class="score-badge score-badge-soft">
+              <span>这条评价</span>
+              <strong style="font-size:1rem">${RATING_LABELS[item.rating] || "还行可吃"}</strong>
+            </div>
+          </div>
+          <p>${item.content}</p>
+        </article>
+      `
+    )
+    .join("");
+}
+
 function renderDetail(data) {
   const backHref = backParams.toString() ? `/recommendations?${backParams.toString()}` : "/";
   const importHref = backParams.toString()
@@ -39,16 +75,16 @@ function renderDetail(data) {
 
   hero.innerHTML = `
     <a class="ghost-link" href="${backHref}">返回榜单</a>
-    <p class="eyebrow">Campus Review Detail</p>
+    <p class="eyebrow">Campus Comment Detail</p>
     <h1 class="detail-title">${data.name}</h1>
-    <p class="hero-text">${data.category} · ${data.distance_text} · 人均 ${data.avg_price} 元 · ${data.business_hours}</p>
+    <p class="hero-text">${data.category} · ${data.travel_text} · 人均 ${data.avg_price} 元 · ${data.business_hours}</p>
     <div class="headline-metrics">
       ${tagsMarkup(data.tags, "tag")}
       ${tagsMarkup(data.risk_flags, "risk")}
     </div>
     <div class="headline-metrics">
-      <span class="filter-pill">当前评论来源：${data.review_source}</span>
-      <span class="filter-pill">已收录评价：${data.review_count}</span>
+      <span class="filter-pill">当前数据来源：${data.review_source}</span>
+      <span class="filter-pill">已收录评论：${data.review_count}</span>
       <a class="ghost-action" href="${importHref}">批量导入历史评论</a>
     </div>
   `;
@@ -56,46 +92,35 @@ function renderDetail(data) {
   grid.innerHTML = `
     <div class="detail-column">
       <section class="detail-block">
-        <p class="eyebrow">Score Breakdown</p>
-        <h2>评分拆解</h2>
-        <div class="score-grid">
-          <div class="score-tile"><span>近期口碑分</span><strong>${data.scores.reputation}</strong><small>反映最近评论整体正负面和口味趋势。</small></div>
-          <div class="score-tile"><span>真实性分</span><strong>${data.scores.authenticity}</strong><small>用于提示模板化评论和异常集中评价风险。</small></div>
-          <div class="score-tile"><span>学生适配分</span><strong>${data.scores.student_fit}</strong><small>结合预算、距离和场景判断是否适合学生去。</small></div>
-          <div class="score-tile"><span>稳定性分</span><strong>${data.scores.stability}</strong><small>关注高峰期翻车概率和体验波动。</small></div>
-        </div>
+        <p class="eyebrow">Store Snapshot</p>
+        <h2>最近评论里大概在说什么</h2>
+        ${listMarkup(data.comment_overview)}
       </section>
 
       <section class="detail-block">
-        <p class="eyebrow">Recent Review</p>
-        <h2>最近同学怎么说</h2>
-        ${listMarkup(data.recent_review_summary)}
-      </section>
-
-      <section class="detail-block">
-        <p class="eyebrow">Signals</p>
-        <h2>菜品与风险点</h2>
-        <div class="tag-row">${tagsMarkup(data.popular_dishes, "tag")}</div>
-        <div class="tag-row" style="margin-top:12px">${tagsMarkup(data.common_negatives, "risk")}</div>
+        <p class="eyebrow">Keywords</p>
+        <h2>评论里常被提到的点</h2>
+        <div class="tag-row">${tagsMarkup(data.highlighted_items, "tag")}</div>
+        <div class="tag-row" style="margin-top:12px">${tagsMarkup(data.caution_items, "risk")}</div>
       </section>
     </div>
 
     <div class="detail-column">
       <section class="detail-block">
-        <p class="eyebrow">Why Go</p>
-        <h2>同学为什么还愿意推荐</h2>
-        ${listMarkup(data.recommend_reasons)}
+        <p class="eyebrow">Why People Go</p>
+        <h2>评论里常提到的亮点</h2>
+        ${listMarkup(data.comment_highlights)}
       </section>
 
       <section class="detail-block">
-        <p class="eyebrow">Be Careful</p>
-        <h2>同学最近提醒的雷点</h2>
-        ${listMarkup(data.warning_points)}
+        <p class="eyebrow">Watch Out</p>
+        <h2>评论里常提醒的地方</h2>
+        ${listMarkup(data.caution_notes)}
       </section>
 
       <section class="detail-block">
         <p class="eyebrow">Scene Fit</p>
-        <h2>场景匹配</h2>
+        <h2>适合什么场景</h2>
         <ul class="kv-list">
           ${Object.entries(data.scene_fit)
             .map(([key, value]) => `<li>${key}：${value}</li>`)
@@ -104,6 +129,8 @@ function renderDetail(data) {
       </section>
     </div>
   `;
+
+  renderPublicReviews(data.reviews);
 }
 
 async function fetchDetail() {
@@ -148,14 +175,14 @@ feedbackForm.addEventListener("submit", async (event) => {
   );
   const content = feedbackContent.value.trim();
   if (!content) {
-    feedbackResult.textContent = "请先填写你的真实评价。";
+    feedbackResult.textContent = "请先写点内容。";
     feedbackResult.classList.add("risk");
     return;
   }
 
   feedbackSubmit.disabled = true;
   feedbackSubmit.textContent = "正在提交...";
-  feedbackResult.textContent = "正在写入评价并重算分析...";
+  feedbackResult.textContent = "正在发布评论...";
   feedbackResult.classList.remove("risk");
 
   try {
@@ -173,14 +200,14 @@ feedbackForm.addEventListener("submit", async (event) => {
       throw new Error(data.detail || "提交失败");
     }
     feedbackContent.value = "";
-    feedbackResult.textContent = `提交成功，当前已纳入 ${data.review_count} 条真实评价。`;
+    feedbackResult.textContent = `发布成功，现在这家店已有 ${data.review_count} 条公开评论。`;
     await fetchDetail();
   } catch (error) {
     feedbackResult.textContent = `提交失败：${error.message}`;
     feedbackResult.classList.add("risk");
   } finally {
     feedbackSubmit.disabled = false;
-    feedbackSubmit.textContent = "提交真实评价";
+    feedbackSubmit.textContent = "发布评论";
   }
 });
 

@@ -69,7 +69,7 @@ class RestaurantSourceService:
 
     def _normalize_amap_restaurant(self, restaurant) -> dict:
         avg_price = restaurant.avg_price
-        value_signal = self._estimate_value_signal(avg_price)
+        value_for_money_signal = self._estimate_value_signal(avg_price)
         portion_signal = 78 if avg_price <= 50 else 70
         normalized = {
             "id": f"amap_{restaurant.source_id}",
@@ -83,28 +83,29 @@ class RestaurantSourceService:
             "distance_meters": restaurant.distance_meters,
             "lng": restaurant.lng,
             "lat": restaurant.lat,
-            "positive_signals": 72,
-            "negative_intensity": 28,
-            "detail_richness": 52,
-            "trend_score": 65,
-            "template_risk": 20,
-            "time_anomaly": 15,
-            "high_score_detail": 58,
-            "score_consistency": 68,
-            "value_signal": value_signal,
+            "walking_minutes": restaurant.walking_minutes,
+            "riding_minutes": restaurant.riding_minutes,
+            "positive_comment_ratio": 72,
+            "complaint_intensity": 28,
+            "detail_coverage": 52,
+            "recent_momentum": 65,
+            "duplicate_comment_risk": 20,
+            "recent_burst_risk": 15,
+            "praise_detail_ratio": 58,
+            "opinion_spread": 68,
+            "value_for_money_signal": value_for_money_signal,
             "portion_signal": portion_signal,
-            "peak_risk": 35,
-            "volatility": 30,
-            "negative_focus": 60,
-            "popular_dishes": [],
-            "common_negatives": ["评论数据暂未接入"],
-            "recommend_reasons": self._build_base_reasons(restaurant.distance_meters, avg_price),
-            "warning_points": [
-                "当前为地图基础数据评分，评论分析模块待接入",
+            "queue_pressure": 35,
+            "issue_concentration": 60,
+            "highlighted_items": [],
+            "caution_items": ["评论数据暂未接入"],
+            "comment_highlights": self._build_base_reasons(restaurant.distance_meters, avg_price),
+            "caution_notes": [
+                "当前只有基础店铺信息，评论内容还在持续补充中",
             ],
-            "recent_review_summary": [
+            "comment_overview": [
                 "当前店铺来自高德周边搜索，已完成距离和价格维度估算。",
-                "评论抓取与近期口碑分析将在下一阶段接入。",
+                "评论内容和留言摘要会在后续有人补充后逐步变完整。",
             ],
             "scene_fit": self._build_scene_fit(avg_price, restaurant.distance_meters),
         }
@@ -115,29 +116,32 @@ class RestaurantSourceService:
         restaurant.setdefault("source", "mock")
         restaurant.setdefault("lng", 121.4737)
         restaurant.setdefault("lat", 31.2304)
-        restaurant.setdefault("positive_signals", 72)
-        restaurant.setdefault("negative_intensity", 28)
-        restaurant.setdefault("detail_richness", 52)
-        restaurant.setdefault("trend_score", 65)
-        restaurant.setdefault("template_risk", 20)
-        restaurant.setdefault("time_anomaly", 15)
-        restaurant.setdefault("high_score_detail", 58)
-        restaurant.setdefault("score_consistency", 68)
-        restaurant.setdefault("value_signal", self._estimate_value_signal(restaurant["avg_price"]))
-        restaurant.setdefault("portion_signal", 78 if restaurant["avg_price"] <= 50 else 70)
-        restaurant.setdefault("peak_risk", 35)
-        restaurant.setdefault("volatility", 30)
-        restaurant.setdefault("negative_focus", 60)
-        restaurant.setdefault("popular_dishes", [])
-        restaurant.setdefault("common_negatives", ["评论数据暂未接入"])
+        restaurant.setdefault("walking_minutes", None)
+        restaurant.setdefault("riding_minutes", None)
+        restaurant.setdefault("positive_comment_ratio", 72)
+        restaurant.setdefault("complaint_intensity", 28)
+        restaurant.setdefault("detail_coverage", 52)
+        restaurant.setdefault("recent_momentum", 65)
+        restaurant.setdefault("duplicate_comment_risk", 20)
+        restaurant.setdefault("recent_burst_risk", 15)
+        restaurant.setdefault("praise_detail_ratio", 58)
+        restaurant.setdefault("opinion_spread", 68)
         restaurant.setdefault(
-            "recommend_reasons",
+            "value_for_money_signal", self._estimate_value_signal(restaurant["avg_price"])
+        )
+        restaurant.setdefault("portion_signal", 78 if restaurant["avg_price"] <= 50 else 70)
+        restaurant.setdefault("queue_pressure", 35)
+        restaurant.setdefault("issue_concentration", 60)
+        restaurant.setdefault("highlighted_items", [])
+        restaurant.setdefault("caution_items", ["评论数据暂未接入"])
+        restaurant.setdefault(
+            "comment_highlights",
             self._build_base_reasons(restaurant["distance_meters"], restaurant["avg_price"]),
         )
-        restaurant.setdefault("warning_points", ["当前为基础信息缓存，评论分析会在详情页补充"])
+        restaurant.setdefault("caution_notes", ["当前为基础信息缓存，评论内容会在详情页逐步补充"])
         restaurant.setdefault(
-            "recent_review_summary",
-            ["当前店铺来自缓存基础信息，若存在评论数据会自动重新分析。"],
+            "comment_overview",
+            ["当前店铺来自缓存基础信息，若存在评论数据会自动更新页面概况。"],
         )
         restaurant.setdefault(
             "scene_fit",

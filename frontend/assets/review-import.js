@@ -119,7 +119,7 @@ importForm.addEventListener("submit", async (event) => {
   };
 
   resultNode.innerHTML = `
-    <div class="status-line">正在导入并重算评分...</div>
+    <div class="status-line">正在导入评论并刷新页面概况...</div>
     <div class="skeleton skeleton-line mid" style="margin-top:12px"></div>
     <div class="skeleton skeleton-line long" style="margin-top:12px"></div>
   `;

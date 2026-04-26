@@ -8,7 +8,15 @@ const mapLink = document.getElementById("map-link");
 const backToHomeLink = document.getElementById("back-to-home-link");
 
 let restaurants = [];
-let activeSort = "final_score";
+let activeSort = "review_count";
+
+const TONE_CLASS = {
+  "大家挺推荐": "tag",
+  "最近讨论不少": "tag",
+  "评价还在积累": "filter-pill",
+  "吐槽偏多": "risk",
+  "还没人留言": "filter-pill",
+};
 
 function renderFilterSummary() {
   backToHomeLink.href = `/?${params.toString()}`;
@@ -30,16 +38,38 @@ function sortRestaurants(items) {
     sorted.sort((a, b) => a[activeSort] - b[activeSort]);
     return sorted;
   }
-  sorted.sort((a, b) => b.final_score - a.final_score);
+  if (activeSort === "review_count") {
+    sorted.sort((a, b) => {
+      if (b.review_count !== a.review_count) return b.review_count - a.review_count;
+      if (a.comment_tone !== b.comment_tone) {
+        const tonePriority = {
+          "大家挺推荐": 3,
+          "最近讨论不少": 2,
+          "评价还在积累": 1,
+          "还没人留言": 0,
+          "吐槽偏多": -1,
+        };
+        return (
+          (tonePriority[b.comment_tone] || 0) - (tonePriority[a.comment_tone] || 0)
+        );
+      }
+      return a.distance_meters - b.distance_meters;
+    });
+    return sorted;
+  }
   return sorted;
+}
+
+function tonePill(label) {
+  return `<span class="${TONE_CLASS[label] || "filter-pill"}">${label}</span>`;
 }
 
 function renderList() {
   if (!restaurants.length) {
     listContainer.innerHTML = `
       <article class="restaurant-card empty-state">
-        <h3>当前条件下没有找到评论信号更稳的店</h3>
-        <p class="card-meta">可以返回上一页放宽预算或距离条件，或者导入更多评论后再看。</p>
+        <h3>当前条件下还没有可参考的店铺评论</h3>
+        <p class="card-meta">可以返回上一页放宽预算或距离条件，或者先去某家店下面补几条评论。</p>
       </article>
     `;
     return;
@@ -53,23 +83,22 @@ function renderList() {
           <div class="card-top">
             <div class="card-title-wrap">
               <h3>${restaurant.name}</h3>
-              <p class="card-meta">${restaurant.distance_text} · 人均 ${restaurant.avg_price} 元 · 评论来源 ${restaurant.source}</p>
+              <p class="card-meta">${restaurant.travel_text} · 人均 ${restaurant.avg_price} 元 · ${restaurant.review_count} 条评论</p>
             </div>
-            <div class="score-badge">
-              <span>避雷推荐分</span>
-              <strong>${restaurant.final_score}</strong>
+            <div class="score-badge score-badge-soft">
+              <span>最近风向</span>
+              <strong style="font-size:1rem">${restaurant.comment_tone}</strong>
             </div>
+          </div>
+          <div class="tag-row">
+            ${tonePill(restaurant.comment_tone)}
           </div>
           <div class="tag-row">
             ${restaurant.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}
             ${restaurant.risk_flags.map((tag) => `<span class="risk">${tag}</span>`).join("")}
           </div>
-          <div class="score-preview">
-            ${scoreBar("综合避雷", restaurant.final_score)}
-            ${scoreBar("预算友好", Math.max(100 - restaurant.avg_price, 30))}
-            ${scoreBar("到达便利", Math.max(100 - Math.round(restaurant.distance_meters / 30), 25))}
-          </div>
-          <p><strong>近期判断：</strong>${restaurant.summary}</p>
+          <p><strong>大家最近在说：</strong>${restaurant.summary}</p>
+          <p class="card-meta">店铺来源：${restaurant.source}</p>
           <div class="card-actions">
             <a class="secondary-button" href="/restaurant-view?id=${restaurant.restaurant_id}&${params.toString()}">看详细评价</a>
             <a class="secondary-button" href="/map-view?${params.toString()}">再看位置</a>
@@ -78,18 +107,6 @@ function renderList() {
       `
     )
     .join("");
-}
-
-function scoreBar(label, value) {
-  return `
-    <div class="score-bar">
-      <span>${label}</span>
-      <div class="score-bar-track">
-        <div class="score-bar-fill" style="width:${value}%"></div>
-      </div>
-      <strong>${value}</strong>
-    </div>
-  `;
 }
 
 function renderLoadingState() {
@@ -134,15 +151,15 @@ async function fetchRecommendations() {
 
     const data = await response.json();
     restaurants = data.list;
-    statusLine.textContent = `共分析 ${data.total} 家店，默认按“同学真实反馈下更少踩雷”优先排序`;
+    statusLine.textContent = `共找到 ${data.total} 家店，默认按“评论数量更多、最近更有讨论”排序`;
     dataSource.textContent = restaurants[0] ? `当前店铺入口：${restaurants[0].source}` : "";
     renderList();
   } catch (error) {
     statusLine.textContent = "加载失败，请稍后重试。";
     listContainer.innerHTML = `
       <article class="restaurant-card empty-state">
-        <h3>评价分析暂时不可用</h3>
-        <p class="card-meta">请检查后端是否已启动，或稍后重新获取推荐。</p>
+        <h3>评论列表暂时不可用</h3>
+        <p class="card-meta">请检查后端是否已启动，或稍后重新获取附近店铺。</p>
       </article>
     `;
   }

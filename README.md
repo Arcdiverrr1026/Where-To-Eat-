@@ -1,16 +1,15 @@
 # Where To Eat
 
-一个面向大学生的校园餐厅真实评价反馈与避雷推荐系统原型。
+一个面向大学生的校园餐厅真实评论平台原型。
 
 当前项目已经包含：
 
 - 首页筛选、推荐榜单、地图视图、店铺详情
 - 评论导入页与后台管理页
-- 店铺详情页支持用户直接提交真实评价并即时重算结果
+- 店铺详情页支持用户直接提交真实评论并即时刷新页面概况
 - 支持本地 JSON / CSV 文件导入评论
 - 餐厅基础信息缓存
 - 评论导入持久化
-- 评分与分析结果缓存
 - 高德周边搜索接入骨架
 - 无高德 Key 时的 mock 回退链路
 
@@ -23,14 +22,14 @@
 
 ## Product Positioning
 
-这个项目的核心不是“附近有什么吃的”，而是“同学最近真实反馈下，哪些店更值得去、哪些店更容易踩雷”。
+这个项目的核心不是“附近有什么吃的”，而是“学校附近这家店，最近大家到底怎么说”。
 
-系统目前支持两类评价来源：
+系统目前支持两类评论来源：
 
-- 用户在店铺详情页直接提交真实评分和短评
+- 用户在店铺详情页直接提交真实评论
 - 管理端或运营侧通过 JSON / CSV 批量补录历史评论
 
-提交后会立即进入 SQLite，并触发评论分析和推荐结果更新，逐步形成校园内自己的餐厅口碑库。
+提交后会立即进入 SQLite，并更新这家店的评论概况，逐步形成校园内自己的餐厅评论池。
 
 ## Project Structure
 
@@ -38,7 +37,7 @@
 app/
   api/                HTTP 路由
   clients/            外部服务客户端
-  core/               配置、评分、评论分析
+  core/               配置、评论摘要
   data/               mock 餐厅与评论
   db/                 SQLite 存储层
   services/           推荐、评论、餐厅数据服务
@@ -74,9 +73,9 @@ USE_MOCK_REVIEW_FALLBACK=false
 - `AMAP_JS_API_KEY`：高德 Web 端 JS API Key
 - `AMAP_SECURITY_JS_CODE`：高德 JS API 安全密钥
 
-默认情况下，系统不会再使用预置 mock 评论参与口碑判断。
+默认情况下，系统不会再使用预置 mock 评论参与页面展示判断。
 
-- `USE_MOCK_REVIEW_FALLBACK=false`：仅使用用户提交 / 导入的真实评价
+- `USE_MOCK_REVIEW_FALLBACK=false`：仅使用用户提交 / 导入的真实评论
 - `USE_MOCK_REVIEW_FALLBACK=true`：开发演示时允许回退到 mock 评论
 
 ## Setup
@@ -103,7 +102,6 @@ PYTHONPATH=. ./.venv/bin/python scripts/bootstrap_demo.py
 
 - 初始化 SQLite 表
 - 预热 mock 餐厅缓存
-- 预热分析结果缓存
 
 它不会清空你已有的导入评论。
 
@@ -167,9 +165,9 @@ GET  /health
 
 在 `/restaurant-view?id=r001` 页面里，用户可以直接：
 
-- 选择 `1-5` 分
-- 填写一句真实短评
-- 提交后立即重算这家店的分析结果
+- 选择一个口语化态度档位
+- 填写一句真实评论
+- 提交后立即出现在这家店的评论区里
 
 ## Review Import Format
 
@@ -178,7 +176,7 @@ GET  /health
 - 直接粘贴 JSON / CSV
 - 选择本地 `.json` / `.csv` 文件后自动载入
 
-导入后会立即触发评论分析重算。
+导入后会立即刷新这家店的评论概况。
 
 JSON:
 
@@ -200,6 +198,6 @@ rating,content,days_ago
 ## Notes
 
 - `data/where_to_eat.db` 是本地 SQLite 数据库，已加入 `.gitignore`
-- 导入评论、缓存餐厅、分析结果都会写入 SQLite
+- 导入评论和缓存餐厅都会写入 SQLite
 - 当前评论来源仍以 mock 与导入数据为主，真实平台评论抓取尚未接入
 - 当前前端为静态页面方案，适合原型、实习项目演示和快速联调
