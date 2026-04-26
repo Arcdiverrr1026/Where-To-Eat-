@@ -19,6 +19,7 @@ class Settings:
     amap_security_js_code: str = os.getenv("AMAP_SECURITY_JS_CODE", "").strip()
     amap_radius_meters: int = int(os.getenv("AMAP_RADIUS_METERS", "3000"))
     amap_page_size: int = int(os.getenv("AMAP_PAGE_SIZE", "20"))
+    amap_page_count: int = int(os.getenv("AMAP_PAGE_COUNT", "3"))
     use_mock_fallback: bool = os.getenv("USE_MOCK_FALLBACK", "true").lower() != "false"
     use_mock_review_fallback: bool = (
         os.getenv("USE_MOCK_REVIEW_FALLBACK", "false").lower() == "true"

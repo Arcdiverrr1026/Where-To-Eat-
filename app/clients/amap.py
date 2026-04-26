@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from json import JSONDecodeError
+import re
 
 import httpx
 
@@ -12,11 +13,13 @@ class AmapRestaurantCandidate:
     name: str
     category: str
     address: str
+    raw_type: str
     avg_price: int
     business_hours: str
     distance_meters: int
     lng: float | None = None
     lat: float | None = None
+    avg_price_known: bool = True
     walking_minutes: int | None = None
     riding_minutes: int | None = None
 
@@ -40,45 +43,36 @@ class AmapClient:
         keyword: str,
         radius_meters: int,
         page_size: int,
+        page_count: int = 1,
     ) -> list[AmapRestaurantCandidate]:
         if not self.is_configured():
             return []
-
-        params = {
-            "key": self.api_key,
-            "location": f"{lng},{lat}",
-            "keywords": keyword,
-            "radius": radius_meters,
-            "page_size": page_size,
-            "sortrule": "distance",
-            "show_fields": "business,indoor,photos",
-        }
-
-        with httpx.Client(timeout=10.0) as client:
-            try:
-                response = client.get(self.base_url, params=params)
-                response.raise_for_status()
-                payload = response.json()
-            except (httpx.HTTPError, JSONDecodeError, ValueError):
-                return []
-
-        if not isinstance(payload, dict):
-            return []
-
-        pois = payload.get("pois", [])
-        if not isinstance(pois, list):
-            return []
-
+        pois = self._fetch_pois(
+            lat=lat,
+            lng=lng,
+            keyword=keyword,
+            radius_meters=radius_meters,
+            page_size=page_size,
+            page_count=page_count,
+        )
         candidates: list[AmapRestaurantCandidate] = []
+        seen_ids: set[str] = set()
         for poi in pois:
             if not isinstance(poi, dict):
                 continue
+            source_id = poi.get("id", "")
+            if not source_id or source_id in seen_ids:
+                continue
+            seen_ids.add(source_id)
+            avg_price, avg_price_known = self._extract_price(poi)
             candidate = AmapRestaurantCandidate(
-                source_id=poi.get("id", ""),
+                source_id=source_id,
                 name=poi.get("name", "未知店铺"),
                 category=keyword,
                 address=poi.get("address", "地址待补充"),
-                avg_price=self._extract_price(poi),
+                raw_type=str(poi.get("type", "") or ""),
+                avg_price=avg_price,
+                avg_price_known=avg_price_known,
                 business_hours=self._extract_business_hours(poi),
                 distance_meters=self._extract_distance(poi),
                 lng=self._extract_lng(poi),
@@ -100,18 +94,66 @@ class AmapClient:
                     mode="riding",
                 )
             candidates.append(candidate)
+        candidates.sort(key=lambda item: item.distance_meters)
         return candidates
 
-    def _extract_price(self, poi: dict) -> int:
+    def _fetch_pois(
+        self,
+        *,
+        lat: float,
+        lng: float,
+        keyword: str,
+        radius_meters: int,
+        page_size: int,
+        page_count: int,
+    ) -> list[dict]:
+        params_base = {
+            "key": self.api_key,
+            "location": f"{lng},{lat}",
+            "keywords": keyword,
+            "radius": radius_meters,
+            "page_size": page_size,
+            "sortrule": "distance",
+            "show_fields": "business,indoor,photos",
+        }
+        pois: list[dict] = []
+        with httpx.Client(timeout=10.0) as client:
+            for page_num in range(1, max(page_count, 1) + 1):
+                try:
+                    response = client.get(
+                        self.base_url,
+                        params={**params_base, "page_num": page_num},
+                    )
+                    response.raise_for_status()
+                    payload = response.json()
+                except (httpx.HTTPError, JSONDecodeError, ValueError):
+                    break
+
+                if not isinstance(payload, dict):
+                    break
+                page_pois = payload.get("pois", [])
+                if not isinstance(page_pois, list) or not page_pois:
+                    break
+                pois.extend(page_pois)
+                if len(page_pois) < page_size:
+                    break
+        return pois
+
+    def _extract_price(self, poi: dict) -> tuple[int, bool]:
         business = poi.get("business", {})
         if not isinstance(business, dict):
-            return 35
+            return 35, False
         cost = business.get("cost")
-        if isinstance(cost, str) and cost.isdigit():
-            return int(cost)
         if isinstance(cost, (int, float)):
-            return int(cost)
-        return 35
+            return int(cost), True
+        if isinstance(cost, str):
+            normalized = cost.strip()
+            if normalized.isdigit():
+                return int(normalized), True
+            match = re.search(r"\d+(?:\.\d+)?", normalized)
+            if match:
+                return int(round(float(match.group(0)))), True
+        return 35, False
 
     def _extract_business_hours(self, poi: dict) -> str:
         business = poi.get("business", {})

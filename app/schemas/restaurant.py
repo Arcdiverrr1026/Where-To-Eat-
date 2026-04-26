@@ -32,6 +32,9 @@ class RestaurantCard(BaseModel):
     distance_text: str
     travel_text: str
     avg_price: int
+    price_text: str
+    price_source: str
+    scene_match: str
     review_count: int
     comment_tone: str
     tags: list[str]
@@ -63,6 +66,8 @@ class RestaurantDetailResponse(BaseModel):
     distance_text: str
     travel_text: str
     avg_price: int
+    price_text: str
+    price_source: str
     business_hours: str
     tags: list[str]
     risk_flags: list[str]

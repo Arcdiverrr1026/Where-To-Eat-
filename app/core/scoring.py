@@ -1,9 +1,9 @@
 class ScoringEngine:
-    budget_limits = {
-        "20以内": 20,
-        "50以内": 50,
-        "70以内": 70,
-        "70以上": None,
+    budget_ranges = {
+        "20以内": (None, 20),
+        "50以内": (21, 50),
+        "70以内": (51, 70),
+        "70以上": (70, None),
     }
 
     distance_limits = {
@@ -12,9 +12,15 @@ class ScoringEngine:
         "3公里内": 3000,
     }
 
-    def within_budget(self, price: int, budget: str) -> bool:
-        limit = self.budget_limits[budget]
-        return True if limit is None else price <= limit
+    def within_budget(self, price: int, budget: str, *, price_known: bool = True) -> bool:
+        if not price_known:
+            return True
+        lower, upper = self.budget_ranges[budget]
+        if lower is not None and price < lower:
+            return False
+        if upper is not None and price > upper:
+            return False
+        return True
 
     def within_distance(self, meters: int, distance: str) -> bool:
         return meters <= self.distance_limits[distance]

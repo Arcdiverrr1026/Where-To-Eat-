@@ -79,12 +79,18 @@ class RecommendationService:
                 distance=payload.distance,
                 scene=payload.scene,
             )
-            if not self.scoring.within_budget(restaurant["avg_price"], payload.budget):
+            if not self.scoring.within_budget(
+                restaurant["avg_price"],
+                payload.budget,
+                price_known=restaurant.get("avg_price_known", True),
+            ):
                 continue
             if not self.scoring.within_route_constraint(
                 restaurant=restaurant,
                 distance=payload.distance,
             ):
+                continue
+            if not self._matches_scene(restaurant, payload.scene):
                 continue
             self.restaurant_cache[restaurant["id"]] = restaurant
             lng_value = restaurant.get("lng")
@@ -101,6 +107,9 @@ class RecommendationService:
                     distance_text=self._format_distance(restaurant["distance_meters"]),
                     travel_text=self._format_travel(restaurant),
                     avg_price=restaurant["avg_price"],
+                    price_text=self._format_price(restaurant),
+                    price_source=self._format_price_source(restaurant),
+                    scene_match=self._scene_match_label(restaurant, payload.scene),
                     review_count=restaurant.get("review_count", 0),
                     comment_tone=self._build_comment_tone(restaurant),
                     tags=tags,
@@ -141,6 +150,8 @@ class RecommendationService:
             distance_text=self._format_distance(restaurant["distance_meters"]),
             travel_text=self._format_travel(restaurant),
             avg_price=restaurant["avg_price"],
+            price_text=self._format_price(restaurant),
+            price_source=self._format_price_source(restaurant),
             business_hours=restaurant["business_hours"],
             tags=tags,
             risk_flags=risk_flags,
@@ -298,9 +309,22 @@ class RecommendationService:
             parts.append(f"步行约{walking_minutes}分钟")
         if riding_minutes is not None:
             parts.append(f"骑行约{riding_minutes}分钟")
+        distance_text = self._format_distance(int(restaurant["distance_meters"]))
         if parts:
-            return " · ".join(parts)
-        return self._format_distance(int(restaurant["distance_meters"]))
+            return " · ".join(parts + [f"距离约{distance_text}"])
+        return f"距离约{distance_text}"
+
+    def _format_price(self, restaurant: dict) -> str:
+        if not restaurant.get("avg_price_known", True):
+            return "人均待补充"
+        return f"人均约{int(restaurant['avg_price'])}元"
+
+    def _format_price_source(self, restaurant: dict) -> str:
+        if restaurant.get("avg_price_known", True):
+            if restaurant.get("source") == "amap":
+                return "价格来源：高德"
+            return "价格来源：项目预设"
+        return "价格来源：待补充"
 
     def _build_summary(self, restaurant: dict) -> str:
         if restaurant.get("review_count", 0) == 0:
@@ -320,7 +344,7 @@ class RecommendationService:
             return "最近讨论不少"
         return "评价还在积累"
 
-    def _restaurant_card_sort_key(self, item: RestaurantCard) -> tuple[int, int, int]:
+    def _restaurant_card_sort_key(self, item: RestaurantCard) -> tuple[int, int, int, int]:
         tone_priority = {
             "大家挺推荐": 3,
             "最近讨论不少": 2,
@@ -328,11 +352,26 @@ class RecommendationService:
             "还没人留言": 0,
             "吐槽偏多": -1,
         }
+        scene_priority = {
+            "当前场景高匹配": 2,
+            "当前场景中匹配": 1,
+            "当前场景低匹配": 0,
+        }
         return (
+            -scene_priority.get(item.scene_match, 0),
             -item.review_count,
             -tone_priority.get(item.comment_tone, 0),
             item.distance_meters,
         )
+
+    def _matches_scene(self, restaurant: dict, scene: str) -> bool:
+        scene_fit = restaurant.get("scene_fit", {})
+        return scene_fit.get(scene, "中匹配") != "低匹配"
+
+    def _scene_match_label(self, restaurant: dict, scene: str) -> str:
+        scene_fit = restaurant.get("scene_fit", {})
+        match_level = scene_fit.get(scene, "中匹配")
+        return f"当前场景{match_level}"
 
     def _build_tags(self, restaurant: dict) -> tuple[list[str], list[str]]:
         if restaurant.get("review_count", 0) == 0:

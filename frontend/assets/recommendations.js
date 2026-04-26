@@ -83,7 +83,7 @@ function renderList() {
           <div class="card-top">
             <div class="card-title-wrap">
               <h3>${restaurant.name}</h3>
-              <p class="card-meta">${restaurant.travel_text} · 人均 ${restaurant.avg_price} 元 · ${restaurant.review_count} 条评论</p>
+              <p class="card-meta">${restaurant.travel_text} · ${restaurant.price_text} · ${restaurant.review_count} 条评论</p>
             </div>
             <div class="score-badge score-badge-soft">
               <span>最近风向</span>
@@ -91,6 +91,7 @@ function renderList() {
             </div>
           </div>
           <div class="tag-row">
+            <span class="filter-pill">${restaurant.scene_match}</span>
             ${tonePill(restaurant.comment_tone)}
           </div>
           <div class="tag-row">
@@ -98,7 +99,7 @@ function renderList() {
             ${restaurant.risk_flags.map((tag) => `<span class="risk">${tag}</span>`).join("")}
           </div>
           <p><strong>大家最近在说：</strong>${restaurant.summary}</p>
-          <p class="card-meta">店铺来源：${restaurant.source}</p>
+          <p class="card-meta">店铺来源：${restaurant.source} · ${restaurant.price_source}</p>
           <div class="card-actions">
             <a class="secondary-button" href="/restaurant-view?id=${restaurant.restaurant_id}&${params.toString()}">看详细评价</a>
             <a class="secondary-button" href="/map-view?${params.toString()}">再看位置</a>

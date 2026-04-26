@@ -77,7 +77,7 @@ function renderDetail(data) {
     <a class="ghost-link" href="${backHref}">返回榜单</a>
     <p class="eyebrow">Campus Comment Detail</p>
     <h1 class="detail-title">${data.name}</h1>
-    <p class="hero-text">${data.category} · ${data.travel_text} · 人均 ${data.avg_price} 元 · ${data.business_hours}</p>
+    <p class="hero-text">${data.category} · ${data.travel_text} · ${data.price_text} · ${data.business_hours}</p>
     <div class="headline-metrics">
       ${tagsMarkup(data.tags, "tag")}
       ${tagsMarkup(data.risk_flags, "risk")}
@@ -85,6 +85,7 @@ function renderDetail(data) {
     <div class="headline-metrics">
       <span class="filter-pill">当前数据来源：${data.review_source}</span>
       <span class="filter-pill">已收录评论：${data.review_count}</span>
+      <span class="filter-pill">${data.price_source}</span>
       <a class="ghost-action" href="${importHref}">批量导入历史评论</a>
     </div>
   `;

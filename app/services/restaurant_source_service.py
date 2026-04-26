@@ -7,6 +7,15 @@ from app.db.sqlite import SQLiteStore
 
 
 class RestaurantSourceService:
+    CATEGORY_KEYWORDS = {
+        "火锅": ["火锅", "重庆火锅", "牛肉火锅"],
+        "烧烤": ["烧烤", "烤串", "烤肉"],
+        "自助": ["自助", "自助餐", "海鲜自助", "烤肉自助"],
+        "家常菜": ["家常菜", "本帮菜", "小炒"],
+        "麻辣烫": ["麻辣烫", "麻辣拌"],
+        "面食": ["面馆", "拉面", "拌面", "面食"],
+        "奶茶甜品": ["奶茶", "甜品", "饮品", "糖水"],
+    }
     def __init__(self) -> None:
         self.amap_client = AmapClient()
         self.store = SQLiteStore()
@@ -40,14 +49,25 @@ class RestaurantSourceService:
         return candidates
 
     def _fetch_from_amap(self, *, lat: float, lng: float, category: str) -> list[dict]:
-        restaurants = self.amap_client.search_nearby_restaurants(
-            lat=lat,
-            lng=lng,
-            keyword=category,
-            radius_meters=settings.amap_radius_meters,
-            page_size=settings.amap_page_size,
-        )
-        return [self._normalize_amap_restaurant(item) for item in restaurants]
+        keywords = self.CATEGORY_KEYWORDS.get(category, [category])
+        seen_ids: set[str] = set()
+        restaurants = []
+        for keyword in keywords:
+            items = self.amap_client.search_nearby_restaurants(
+                lat=lat,
+                lng=lng,
+                keyword=keyword,
+                radius_meters=settings.amap_radius_meters,
+                page_size=settings.amap_page_size,
+                page_count=settings.amap_page_count,
+            )
+            for item in items:
+                if item.source_id in seen_ids:
+                    continue
+                seen_ids.add(item.source_id)
+                restaurants.append(self._normalize_amap_restaurant(item, category))
+        restaurants.sort(key=lambda item: item["distance_meters"])
+        return restaurants
 
     def _fetch_from_mock(self, *, lat: float, lng: float, category: str) -> list[dict]:
         return [
@@ -67,7 +87,7 @@ class RestaurantSourceService:
             if item["category"] == category
         ]
 
-    def _normalize_amap_restaurant(self, restaurant) -> dict:
+    def _normalize_amap_restaurant(self, restaurant, category: str) -> dict:
         avg_price = restaurant.avg_price
         value_for_money_signal = self._estimate_value_signal(avg_price)
         portion_signal = 78 if avg_price <= 50 else 70
@@ -76,9 +96,11 @@ class RestaurantSourceService:
             "external_id": restaurant.source_id,
             "source": "amap",
             "name": restaurant.name,
-            "category": restaurant.category,
+            "category": category,
             "address": restaurant.address,
+            "raw_type": restaurant.raw_type,
             "avg_price": avg_price,
+            "avg_price_known": restaurant.avg_price_known,
             "business_hours": restaurant.business_hours,
             "distance_meters": restaurant.distance_meters,
             "lng": restaurant.lng,
@@ -107,7 +129,11 @@ class RestaurantSourceService:
                 "当前店铺来自高德周边搜索，已完成距离和价格维度估算。",
                 "评论内容和留言摘要会在后续有人补充后逐步变完整。",
             ],
-            "scene_fit": self._build_scene_fit(avg_price, restaurant.distance_meters),
+            "scene_fit": self._build_scene_fit(
+                avg_price=avg_price,
+                distance_meters=restaurant.distance_meters,
+                category=restaurant.category,
+            ),
         }
         return self._apply_default_signals(normalized)
 
@@ -116,6 +142,8 @@ class RestaurantSourceService:
         restaurant.setdefault("source", "mock")
         restaurant.setdefault("lng", 121.4737)
         restaurant.setdefault("lat", 31.2304)
+        restaurant.setdefault("raw_type", "")
+        restaurant.setdefault("avg_price_known", True)
         restaurant.setdefault("walking_minutes", None)
         restaurant.setdefault("riding_minutes", None)
         restaurant.setdefault("positive_comment_ratio", 72)
@@ -145,9 +173,14 @@ class RestaurantSourceService:
         )
         restaurant.setdefault(
             "scene_fit",
-            self._build_scene_fit(restaurant["avg_price"], restaurant["distance_meters"]),
+            self._build_scene_fit(
+                avg_price=restaurant["avg_price"],
+                distance_meters=restaurant["distance_meters"],
+                category=restaurant["category"],
+            ),
         )
         return restaurant
+
 
     def _estimate_value_signal(self, avg_price: int) -> int:
         if avg_price <= 20:
@@ -173,11 +206,42 @@ class RestaurantSourceService:
         reasons.append("已接入真实周边搜索结果")
         return reasons
 
-    def _build_scene_fit(self, avg_price: int, distance_meters: int) -> dict[str, str]:
-        one_person = "高匹配" if avg_price <= 35 and distance_meters <= 1500 else "中匹配"
-        dorm_group = "高匹配" if avg_price <= 60 else "中匹配"
-        late_night = "高匹配" if distance_meters <= 1000 else "中匹配"
-        date = "中匹配" if avg_price >= 50 else "低匹配"
+    def _build_scene_fit(
+        self,
+        *,
+        avg_price: int,
+        distance_meters: int,
+        category: str,
+    ) -> dict[str, str]:
+        solo_friendly = {"面食", "麻辣烫", "奶茶甜品"}
+        group_friendly = {"火锅", "烧烤", "自助", "家常菜"}
+        date_friendly = {"火锅", "家常菜", "奶茶甜品"}
+
+        if category in solo_friendly and avg_price <= 40 and distance_meters <= 1500:
+            one_person = "高匹配"
+        elif distance_meters <= 2000:
+            one_person = "中匹配"
+        else:
+            one_person = "低匹配"
+
+        if category in group_friendly and avg_price <= 70:
+            dorm_group = "高匹配"
+        elif category == "奶茶甜品":
+            dorm_group = "低匹配"
+        else:
+            dorm_group = "中匹配"
+
+        if distance_meters <= 1200 and category in {"烧烤", "麻辣烫", "面食", "奶茶甜品"}:
+            late_night = "高匹配"
+        elif distance_meters <= 2500:
+            late_night = "中匹配"
+        else:
+            late_night = "低匹配"
+
+        if category in date_friendly and avg_price >= 35:
+            date = "高匹配" if avg_price >= 50 else "中匹配"
+        else:
+            date = "低匹配"
         return {
             "一个人吃": one_person,
             "宿舍聚餐": dorm_group,

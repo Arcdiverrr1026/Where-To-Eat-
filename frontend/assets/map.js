@@ -34,7 +34,7 @@ function renderSelection(item) {
     <div class="card-top">
       <div class="card-title-wrap">
         <h3>${item.name}</h3>
-        <p class="card-meta">${item.travel_text} · 人均 ${item.avg_price} 元 · ${item.review_count} 条评论</p>
+        <p class="card-meta">${item.travel_text} · ${item.price_text} · ${item.review_count} 条评论</p>
       </div>
       <div class="score-badge score-badge-soft">
         <span>最近风向</span>
@@ -43,6 +43,8 @@ function renderSelection(item) {
     </div>
     <div class="tag-row" style="margin-top:14px">
       <span class="filter-pill">${item.comment_tone}</span>
+      <span class="filter-pill">${item.scene_match}</span>
+      <span class="filter-pill">${item.price_source}</span>
       ${item.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}
       ${item.risk_flags.map((tag) => `<span class="risk">${tag}</span>`).join("")}
     </div>
@@ -62,7 +64,7 @@ function renderRestaurantList(restaurants) {
           <div class="map-list-index">${index + 1}</div>
           <div class="map-list-copy">
             <strong>${item.name}</strong>
-            <span>${item.travel_text} · ${item.review_count} 条评论 · ${item.comment_tone}</span>
+            <span>${item.travel_text} · ${item.review_count} 条评论 · ${item.scene_match}</span>
           </div>
           <div class="map-list-score">${item.review_count}</div>
         </button>
@@ -101,7 +103,7 @@ function updateMapSelection(restaurant) {
   infoWindow.setContent(`
     <div class="map-info-window">
       <strong>${restaurant.name}</strong>
-      <p>${restaurant.travel_text} · 人均 ${restaurant.avg_price} 元 · ${restaurant.review_count} 条评论</p>
+      <p>${restaurant.travel_text} · ${restaurant.price_text} · ${restaurant.review_count} 条评论</p>
     </div>
   `);
   infoWindow.open(mapInstance, [restaurant.lng, restaurant.lat]);
