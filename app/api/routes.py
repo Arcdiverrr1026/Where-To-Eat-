@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException
 from app.core.config import settings
 from app.schemas.restaurant import (
     AdminDashboardResponse,
+    RecommendationDebugResponse,
     RestaurantDetailResponse,
     ResetTrialDataResponse,
     ReviewFeedbackRequest,
@@ -24,6 +25,13 @@ def recommend_restaurants(
     payload: RestaurantRecommendationRequest,
 ) -> RestaurantRecommendationResponse:
     return service.recommend(payload)
+
+
+@router.post("/recommend/debug", response_model=RecommendationDebugResponse)
+def recommend_debug(
+    payload: RestaurantRecommendationRequest,
+) -> RecommendationDebugResponse:
+    return service.recommend_debug(payload)
 
 
 @router.get("/restaurants/{restaurant_id}", response_model=RestaurantDetailResponse)

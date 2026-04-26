@@ -47,6 +47,27 @@ class RestaurantRecommendationResponse(BaseModel):
     list: list[RestaurantCard]
 
 
+class RecommendationDebugKeywordStat(BaseModel):
+    keyword: str
+    fetched_count: int
+    deduped_new_count: int
+
+
+class RecommendationDebugResponse(BaseModel):
+    category: str
+    budget: str
+    distance: str
+    scene: str
+    source: str
+    total_fetched: int
+    total_after_dedupe: int
+    filtered_by_budget: int
+    filtered_by_distance: int
+    filtered_by_scene: int
+    final_count: int
+    keyword_stats: list[RecommendationDebugKeywordStat]
+
+
 class RestaurantReviewItem(BaseModel):
     rating: int
     content: str

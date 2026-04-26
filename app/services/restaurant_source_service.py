@@ -33,6 +33,29 @@ class RestaurantSourceService:
             return candidates, "mock"
         return [], "none"
 
+    def fetch_candidates_with_debug(
+        self, *, lat: float, lng: float, category: str
+    ) -> tuple[list[dict], str, dict]:
+        if self.amap_client.is_configured():
+            candidates, debug = self._fetch_from_amap_with_debug(
+                lat=lat,
+                lng=lng,
+                category=category,
+            )
+            if candidates:
+                self.store.upsert_restaurants(candidates)
+                return candidates, "amap", debug
+
+        if settings.use_mock_fallback:
+            candidates = self._fetch_from_mock(lat=lat, lng=lng, category=category)
+            self.store.upsert_restaurants(candidates)
+            return candidates, "mock", {
+                "total_fetched": len(candidates),
+                "total_after_dedupe": len(candidates),
+                "keyword_stats": [],
+            }
+        return [], "none", {"total_fetched": 0, "total_after_dedupe": 0, "keyword_stats": []}
+
     def get_cached_restaurant(self, restaurant_id: str) -> dict | None:
         restaurant = self.store.fetch_restaurant(restaurant_id)
         if restaurant is None:
@@ -49,9 +72,17 @@ class RestaurantSourceService:
         return candidates
 
     def _fetch_from_amap(self, *, lat: float, lng: float, category: str) -> list[dict]:
+        restaurants, _ = self._fetch_from_amap_with_debug(lat=lat, lng=lng, category=category)
+        return restaurants
+
+    def _fetch_from_amap_with_debug(
+        self, *, lat: float, lng: float, category: str
+    ) -> tuple[list[dict], dict]:
         keywords = self.CATEGORY_KEYWORDS.get(category, [category])
         seen_ids: set[str] = set()
         restaurants = []
+        keyword_stats: list[dict] = []
+        total_fetched = 0
         for keyword in keywords:
             items = self.amap_client.search_nearby_restaurants(
                 lat=lat,
@@ -61,13 +92,26 @@ class RestaurantSourceService:
                 page_size=settings.amap_page_size,
                 page_count=settings.amap_page_count,
             )
+            total_fetched += len(items)
+            before_count = len(seen_ids)
             for item in items:
                 if item.source_id in seen_ids:
                     continue
                 seen_ids.add(item.source_id)
                 restaurants.append(self._normalize_amap_restaurant(item, category))
+            keyword_stats.append(
+                {
+                    "keyword": keyword,
+                    "fetched_count": len(items),
+                    "deduped_new_count": len(seen_ids) - before_count,
+                }
+            )
         restaurants.sort(key=lambda item: item["distance_meters"])
-        return restaurants
+        return restaurants, {
+            "total_fetched": total_fetched,
+            "total_after_dedupe": len(restaurants),
+            "keyword_stats": keyword_stats,
+        }
 
     def _fetch_from_mock(self, *, lat: float, lng: float, category: str) -> list[dict]:
         return [

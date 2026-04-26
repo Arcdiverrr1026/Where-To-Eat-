@@ -8,6 +8,8 @@ from app.schemas.restaurant import (
     CachedRestaurantRecord,
     ImportedRestaurantSummary,
     ImportedReviewRecord,
+    RecommendationDebugKeywordStat,
+    RecommendationDebugResponse,
     RestaurantCard,
     RestaurantDetailResponse,
     RestaurantReviewItem,
@@ -63,14 +65,53 @@ class RecommendationService:
         candidates.sort(key=self._restaurant_card_sort_key)
         return RestaurantRecommendationResponse(total=len(candidates), list=candidates)
 
+    def recommend_debug(
+        self, payload: RestaurantRecommendationRequest
+    ) -> RecommendationDebugResponse:
+        restaurants, source, source_debug = self.source_service.fetch_candidates_with_debug(
+            lat=payload.location.lat,
+            lng=payload.location.lng,
+            category=payload.category,
+        )
+        _, filter_debug = self._build_recommendation_cards(
+            restaurants=restaurants,
+            source=source,
+            payload=payload,
+            collect_debug=True,
+        )
+        return RecommendationDebugResponse(
+            category=payload.category,
+            budget=payload.budget,
+            distance=payload.distance,
+            scene=payload.scene,
+            source=source,
+            total_fetched=source_debug["total_fetched"],
+            total_after_dedupe=source_debug["total_after_dedupe"],
+            filtered_by_budget=filter_debug["filtered_by_budget"],
+            filtered_by_distance=filter_debug["filtered_by_distance"],
+            filtered_by_scene=filter_debug["filtered_by_scene"],
+            final_count=filter_debug["final_count"],
+            keyword_stats=[
+                RecommendationDebugKeywordStat(**item)
+                for item in source_debug["keyword_stats"]
+            ],
+        )
+
     def _build_recommendation_cards(
         self,
         *,
         restaurants: list[dict],
         source: str,
         payload: RestaurantRecommendationRequest,
-    ) -> list[RestaurantCard]:
+        collect_debug: bool = False,
+    ) -> list[RestaurantCard] | tuple[list[RestaurantCard], dict]:
         candidates: list[RestaurantCard] = []
+        debug = {
+            "filtered_by_budget": 0,
+            "filtered_by_distance": 0,
+            "filtered_by_scene": 0,
+            "final_count": 0,
+        }
 
         for restaurant in restaurants:
             restaurant, tags, risk_flags = self._prepare_restaurant_for_output(
@@ -84,13 +125,16 @@ class RecommendationService:
                 payload.budget,
                 price_known=restaurant.get("avg_price_known", True),
             ):
+                debug["filtered_by_budget"] += 1
                 continue
             if not self.scoring.within_route_constraint(
                 restaurant=restaurant,
                 distance=payload.distance,
             ):
+                debug["filtered_by_distance"] += 1
                 continue
             if not self._matches_scene(restaurant, payload.scene):
+                debug["filtered_by_scene"] += 1
                 continue
             self.restaurant_cache[restaurant["id"]] = restaurant
             lng_value = restaurant.get("lng")
@@ -117,6 +161,9 @@ class RecommendationService:
                     summary=self._build_summary(restaurant),
                 )
             )
+        debug["final_count"] = len(candidates)
+        if collect_debug:
+            return candidates, debug
         return candidates
 
     def get_restaurant_detail(self, restaurant_id: str) -> RestaurantDetailResponse | None:
