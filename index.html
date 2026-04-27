@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Where To Eat</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=Outfit:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/assets/styles.css?v=20260426" />
+  </head>
+  <body class="page-home">
+    <div class="background-grid"></div>
+    <main class="shell">
+      <section class="hero-card">
+        <div class="hero-copy">
+          <p class="eyebrow">Campus Review Radar</p>
+          <h1>吃饭别靠玄学，先看同学刚刚都说了什么。</h1>
+          <p class="hero-text">
+            这不是单纯的找店工具，而是一个由同学共同提交真实评论、互相补充体验的校园餐厅留言板。
+          </p>
+        </div>
+        <div class="hero-metrics">
+          <div>
+            <span>核心目标</span>
+            <strong>共建评论池</strong>
+          </div>
+          <div>
+            <span>主要依据</span>
+            <strong>公开真实评论</strong>
+          </div>
+          <div>
+            <span>最终产出</span>
+            <strong>去哪吃心里更有数</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel search-panel">
+        <div class="panel-header">
+          <p class="eyebrow">Start Review Check</p>
+          <h2>先看附近哪几家评论多、讨论热，再决定去哪吃</h2>
+        </div>
+
+        <form id="search-form" class="search-form">
+          <div class="field-group">
+            <div class="field-row">
+              <label for="lat">纬度</label>
+              <button id="use-current-location" class="ghost-action" type="button">使用当前定位</button>
+            </div>
+            <input id="lat" name="lat" type="number" step="0.000001" value="31.2304" required />
+          </div>
+
+          <div class="field-group">
+            <label for="lng">经度</label>
+            <input id="lng" name="lng" type="number" step="0.000001" value="121.4737" required />
+          </div>
+
+          <div class="field-group">
+            <div id="location-status" class="status-line">当前默认使用上海坐标，可手动修改或使用浏览器定位。</div>
+          </div>
+
+          <div class="field-group">
+            <span class="field-label">菜品类型</span>
+            <div class="chip-grid" data-group="category">
+              <label class="chip"><input type="radio" name="category" value="火锅" required />火锅</label>
+              <label class="chip chip-active"><input type="radio" name="category" value="烧烤" checked />烧烤</label>
+              <label class="chip"><input type="radio" name="category" value="自助" />自助</label>
+              <label class="chip"><input type="radio" name="category" value="家常菜" />家常菜</label>
+              <label class="chip"><input type="radio" name="category" value="麻辣烫" />麻辣烫</label>
+              <label class="chip"><input type="radio" name="category" value="面食" />面食</label>
+              <label class="chip"><input type="radio" name="category" value="奶茶甜品" />奶茶甜品</label>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <span class="field-label">预算</span>
+            <div class="chip-grid compact" data-group="budget">
+              <label class="chip"><input type="radio" name="budget" value="20以内" required />20以内</label>
+              <label class="chip chip-active"><input type="radio" name="budget" value="50以内" checked />50以内</label>
+              <label class="chip"><input type="radio" name="budget" value="70以内" />70以内</label>
+              <label class="chip"><input type="radio" name="budget" value="70以上" />70以上</label>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <span class="field-label">距离</span>
+            <div class="chip-grid compact" data-group="distance">
+              <label class="chip chip-active"><input type="radio" name="distance" value="步行10分钟内" checked required />步行10分钟内</label>
+              <label class="chip"><input type="radio" name="distance" value="骑车15分钟内" />骑车15分钟内</label>
+              <label class="chip"><input type="radio" name="distance" value="3公里内" />3公里内</label>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <span class="field-label">场景</span>
+            <div class="chip-grid compact" data-group="scene">
+              <label class="chip"><input type="radio" name="scene" value="一个人吃" required />一个人吃</label>
+              <label class="chip chip-active"><input type="radio" name="scene" value="宿舍聚餐" checked />宿舍聚餐</label>
+              <label class="chip"><input type="radio" name="scene" value="夜宵" />夜宵</label>
+              <label class="chip"><input type="radio" name="scene" value="约会" />约会</label>
+            </div>
+          </div>
+
+          <button id="start-search-button" class="primary-button" type="submit">查看附近评论</button>
+        </form>
+      </section>
+    </main>
+
+    <script src="/assets/home.js?v=20260426"></script>
+  </body>
+</html>
