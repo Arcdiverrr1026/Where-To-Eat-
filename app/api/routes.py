@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from secrets import compare_digest
+
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 
 from app.core.config import settings
 from app.schemas.restaurant import (
@@ -18,6 +20,19 @@ from app.services.recommendation_service import RecommendationService
 
 router = APIRouter(prefix="/api", tags=["restaurants"])
 service = RecommendationService()
+
+
+def require_admin_token(x_admin_token: str | None = Header(default=None)) -> None:
+    if not settings.admin_token:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Admin token is not configured",
+        )
+    if not x_admin_token or not compare_digest(x_admin_token, settings.admin_token):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid admin token",
+        )
 
 
 @router.post("/recommend/restaurants", response_model=RestaurantRecommendationResponse)
@@ -65,12 +80,12 @@ def submit_review_feedback(payload: ReviewFeedbackRequest) -> ReviewFeedbackResp
 
 
 @router.get("/admin/dashboard", response_model=AdminDashboardResponse)
-def admin_dashboard() -> AdminDashboardResponse:
+def admin_dashboard(_: None = Depends(require_admin_token)) -> AdminDashboardResponse:
     return service.get_admin_dashboard()
 
 
 @router.post("/admin/reset-data", response_model=ResetTrialDataResponse)
-def reset_trial_data() -> ResetTrialDataResponse:
+def reset_trial_data(_: None = Depends(require_admin_token)) -> ResetTrialDataResponse:
     return service.reset_trial_data()
 
 

@@ -8,8 +8,8 @@ from app.data.mock_reviews import MOCK_REVIEWS
 
 
 class ReviewSourceService:
-    def __init__(self) -> None:
-        self.store = SQLiteStore()
+    def __init__(self, store: SQLiteStore | None = None) -> None:
+        self.store = store if store is not None else SQLiteStore()
 
     def fetch_reviews(self, restaurant: dict) -> tuple[list[dict], str]:
         restaurant_id = restaurant.get("id", "")
@@ -28,13 +28,30 @@ class ReviewSourceService:
         restaurant_id: str,
         review_format: str,
         content: str,
+        mode: str = "append",
     ) -> list[dict]:
         if review_format == "json":
             reviews = self._parse_json_reviews(content)
         else:
             reviews = self._parse_csv_reviews(content)
-        self.store.replace_reviews(restaurant_id, reviews)
-        return reviews
+        if mode not in {"append", "replace"}:
+            raise ValueError("Import mode must be append or replace")
+        if mode == "replace":
+            self.store.replace_reviews(restaurant_id, reviews)
+            return reviews
+        existing = {
+            (item["rating"], item["content"], item["days_ago"])
+            for item in self.store.fetch_reviews(restaurant_id)
+        }
+        new_reviews: list[dict] = []
+        for review in reviews:
+            key = (review["rating"], review["content"], review["days_ago"])
+            if key in existing:
+                continue
+            existing.add(key)
+            new_reviews.append(review)
+        self.store.append_reviews(restaurant_id, new_reviews)
+        return new_reviews
 
     def fetch_public_reviews(self, restaurant_id: str) -> list[dict]:
         return [
@@ -75,13 +92,18 @@ class ReviewSourceService:
         return [self._normalize_review(row) for row in reader]
 
     def _normalize_review(self, item: dict) -> dict:
+        if not isinstance(item, dict):
+            raise ValueError("Each review must be an object")
         if "content" not in item:
             raise ValueError("Each review must include a content field")
+        content = str(item.get("content", "")).strip()
+        if len(content) < 2:
+            raise ValueError("Each review content must contain at least 2 characters")
         rating = int(item.get("rating", 3))
         days_ago = int(item.get("days_ago", 7))
         return {
             "rating": max(1, min(5, rating)),
-            "content": str(item.get("content", "")).strip(),
+            "content": content,
             "days_ago": max(0, days_ago),
         }
 

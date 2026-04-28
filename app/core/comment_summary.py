@@ -1,6 +1,8 @@
 from collections import Counter
 from dataclasses import dataclass
 
+from app.core.pricing import estimate_value_base
+
 
 POSITIVE_KEYWORDS = {
     "好吃",
@@ -221,7 +223,7 @@ class CommentSummarizer:
         return max(35, 100 - round(variance * 12))
 
     def _value_for_money_signal(self, texts: list[str], avg_price: int) -> int:
-        base = 84 if avg_price <= 35 else 76 if avg_price <= 50 else 66
+        base = estimate_value_base(avg_price)
         positive = sum(
             1
             for text in texts
@@ -299,6 +301,8 @@ class CommentSummarizer:
         return overview[:3]
 
     def _empty_comment_highlights(self, fallback: dict) -> list[str]:
+        # NOTE: Similar distance/price reasoning exists in
+        # RestaurantSourceService._build_base_reasons — keep in sync.
         highlights: list[str] = []
         if fallback["distance_meters"] <= 1000:
             highlights.append("离得不远，适合先去试一次再回来补评论")

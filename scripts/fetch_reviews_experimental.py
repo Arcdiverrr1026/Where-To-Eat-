@@ -14,7 +14,6 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from app.schemas.restaurant import ReviewImportRequest  # noqa: E402
 from app.services.review_source_service import ReviewSourceService  # noqa: E402
 
 
@@ -275,14 +274,9 @@ def import_reviews(restaurant_id: str, payload: list[dict[str, Any]]) -> None:
         review_format="json",
         content=json.dumps(payload, ensure_ascii=False),
     )
-    request = ReviewImportRequest(
-        restaurant_id=restaurant_id,
-        format="json",
-        content=json.dumps(payload, ensure_ascii=False),
-    )
     print(
-        "Imported "
-        f"{len(payload)} reviews into SQLite for {request.restaurant_id} via existing review import flow."
+        f"Imported {len(payload)} reviews into SQLite for {restaurant_id} "
+        "via existing review import flow."
     )
 
 

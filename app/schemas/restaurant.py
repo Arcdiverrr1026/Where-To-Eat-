@@ -104,6 +104,9 @@ class RestaurantDetailResponse(BaseModel):
 class ReviewImportRequest(BaseModel):
     restaurant_id: str = Field(..., description="Target restaurant id")
     format: Literal["json", "csv"] = Field(..., description="Review content format")
+    mode: Literal["append", "replace"] = Field(
+        "append", description="Append new reviews or replace existing imported reviews"
+    )
     content: str = Field(..., description="Raw review content")
 
 
@@ -111,6 +114,7 @@ class ReviewImportResponse(BaseModel):
     restaurant_id: str
     imported_count: int
     review_source: str
+    import_mode: str
     sample_review: str | None = None
 
 

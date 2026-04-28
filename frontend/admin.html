@@ -7,10 +7,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=Outfit:wght@300;400;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/assets/styles.css?v=20260426" />
+    <link rel="stylesheet" href="/assets/styles.css?v=20260428fix1" />
   </head>
   <body class="page-admin">
     <div class="background-grid"></div>
@@ -20,6 +20,13 @@
         <p class="eyebrow">Admin Dashboard</p>
         <h1>校园评论后台</h1>
         <p class="hero-text">查看同学共建的评论记录、店铺基础信息缓存，以及当前评论覆盖情况。</p>
+        <div class="field-group admin-token-panel">
+          <label for="admin-token">管理令牌</label>
+          <div class="field-row">
+            <input id="admin-token" name="admin_token" type="password" placeholder="输入 ADMIN_TOKEN 后加载后台数据" />
+            <button id="save-admin-token" class="ghost-action" type="button">保存本次会话</button>
+          </div>
+        </div>
         <div class="admin-toolbar">
           <button id="reset-trial-data" class="secondary-button danger-button" type="button">
             清空试运行数据
@@ -57,6 +64,7 @@
       </section>
     </main>
 
-    <script src="/assets/admin.js?v=20260426"></script>
+    <script src="/assets/shared.js?v=20260428fix1"></script>
+    <script src="/assets/admin.js?v=20260428fix1"></script>
   </body>
 </html>

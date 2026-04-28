@@ -64,6 +64,7 @@ AMAP_PAGE_SIZE=20
 SQLITE_PATH=/absolute/path/to/where_to_eat.db
 USE_MOCK_FALLBACK=true
 USE_MOCK_REVIEW_FALLBACK=false
+ADMIN_TOKEN=change_this_for_local_admin
 ```
 
 如果没有配置 `AMAP_API_KEY`，系统会自动回退到本地 mock 数据。
@@ -77,6 +78,7 @@ USE_MOCK_REVIEW_FALLBACK=false
 
 - `USE_MOCK_REVIEW_FALLBACK=false`：仅使用用户提交 / 导入的真实评论
 - `USE_MOCK_REVIEW_FALLBACK=true`：开发演示时允许回退到 mock 评论
+- `ADMIN_TOKEN`：访问后台管理 API 和清空试运行数据时需要在后台页输入的管理令牌
 
 ## Setup
 
@@ -177,6 +179,8 @@ GET  /health
 - 选择本地 `.json` / `.csv` 文件后自动载入
 
 导入后会立即刷新这家店的评论概况。
+
+默认导入方式为“追加并去重”。如果需要重建某家店的历史评论，可以在导入页选择“覆盖旧评论”。
 
 JSON:
 

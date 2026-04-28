@@ -1,5 +1,4 @@
 const pageParams = new URLSearchParams(window.location.search);
-const chipGroups = document.querySelectorAll("[data-group]");
 const latInput = document.getElementById("lat");
 const lngInput = document.getElementById("lng");
 const locationButton = document.getElementById("use-current-location");
@@ -7,17 +6,6 @@ const locationStatus = document.getElementById("location-status");
 const searchForm = document.getElementById("search-form");
 const startSearchButton = document.getElementById("start-search-button");
 const SEARCH_STATE_KEY = "where_to_eat_search_state";
-
-chipGroups.forEach((group) => {
-  const chips = group.querySelectorAll(".chip");
-  chips.forEach((chip) => {
-    const input = chip.querySelector("input");
-    input.addEventListener("change", () => {
-      chips.forEach((item) => item.classList.remove("chip-active"));
-      if (input.checked) chip.classList.add("chip-active");
-    });
-  });
-});
 
 function setLocationStatus(message, isError = false) {
   locationStatus.textContent = message;
@@ -37,20 +25,13 @@ function applyFormState(state) {
     ["scene", state.scene],
   ].forEach(([name, value]) => {
     if (!value) return;
-    const input = document.querySelector(`input[name="${name}"][value="${value}"]`);
+    const input = Array.from(document.querySelectorAll(`input[name="${name}"]`))
+      .find((candidate) => candidate.value === value);
     if (input) input.checked = true;
   });
 }
 
-function syncChipState() {
-  chipGroups.forEach((group) => {
-    const chips = group.querySelectorAll(".chip");
-    chips.forEach((chip) => {
-      const input = chip.querySelector("input");
-      chip.classList.toggle("chip-active", input.checked);
-    });
-  });
-}
+
 
 function getCurrentFormState() {
   return {
@@ -99,9 +80,10 @@ function restoreFormFromParams() {
     }
   }
 
-  syncChipState();
+  syncChipVisuals();
 }
 
+initChipGroups();
 restoreFormFromParams();
 resetSearchButton();
 
@@ -120,11 +102,12 @@ locationButton.addEventListener("click", () => {
 
   navigator.geolocation.getCurrentPosition(
     (position) => {
-      latInput.value = position.coords.latitude.toFixed(6);
-      lngInput.value = position.coords.longitude.toFixed(6);
+      const gcj = wgs84ToGcj02(position.coords.longitude, position.coords.latitude);
+      latInput.value = gcj.lat.toFixed(6);
+      lngInput.value = gcj.lng.toFixed(6);
       persistFormState();
       locationButton.disabled = false;
-      setLocationStatus("已更新为当前定位坐标。");
+      setLocationStatus("已更新为当前定位坐标（已转换为高德坐标系）。");
     },
     (error) => {
       locationButton.disabled = false;

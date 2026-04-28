@@ -30,9 +30,13 @@ class RecommendationService:
         self.scoring = ScoringEngine()
         self.comment_summarizer = CommentSummarizer()
         self.store = SQLiteStore()
-        self.source_service = RestaurantSourceService()
-        self.review_source_service = ReviewSourceService()
+        self.source_service = RestaurantSourceService(store=self.store)
+        self.review_source_service = ReviewSourceService(store=self.store)
         self.restaurant_cache: dict[str, dict] = {}
+
+    def close(self) -> None:
+        self.source_service.close()
+        self.store.close()
 
     def recommend(
         self, payload: RestaurantRecommendationRequest
@@ -115,10 +119,7 @@ class RecommendationService:
 
         for restaurant in restaurants:
             restaurant, tags, risk_flags = self._prepare_restaurant_for_output(
-                restaurant=restaurant,
-                budget=payload.budget,
-                distance=payload.distance,
-                scene=payload.scene,
+                restaurant,
             )
             if not self.scoring.within_budget(
                 restaurant["avg_price"],
@@ -167,22 +168,10 @@ class RecommendationService:
         return candidates
 
     def get_restaurant_detail(self, restaurant_id: str) -> RestaurantDetailResponse | None:
-        restaurant = self.restaurant_cache.get(restaurant_id)
-        if restaurant is None:
-            restaurant = self.source_service.get_cached_restaurant(restaurant_id)
-        if restaurant is None and settings.use_mock_fallback:
-            restaurant = self._find_mock_restaurant(restaurant_id)
+        restaurant = self._resolve_restaurant(restaurant_id)
         if restaurant is None:
             return None
-        default_budget = "50以内"
-        default_distance = "骑车15分钟内"
-        default_scene = "宿舍聚餐"
-        restaurant, tags, risk_flags = self._prepare_restaurant_for_output(
-            restaurant=restaurant,
-            budget=default_budget,
-            distance=default_distance,
-            scene=default_scene,
-        )
+        restaurant, tags, risk_flags = self._prepare_restaurant_for_output(restaurant)
         reviews = self.review_source_service.fetch_public_reviews(restaurant["id"])
 
         return RestaurantDetailResponse(
@@ -212,43 +201,31 @@ class RecommendationService:
         )
 
     def import_reviews(self, payload: ReviewImportRequest) -> ReviewImportResponse | None:
-        restaurant = self.restaurant_cache.get(payload.restaurant_id)
-        if restaurant is None:
-            restaurant = self.source_service.get_cached_restaurant(payload.restaurant_id)
-        if restaurant is None and settings.use_mock_fallback:
-            restaurant = self._find_mock_restaurant(payload.restaurant_id)
+        restaurant = self._resolve_restaurant(payload.restaurant_id)
         if restaurant is None:
             return None
 
         reviews = self.review_source_service.import_reviews(
             restaurant_id=payload.restaurant_id,
             review_format=payload.format,
+            mode=payload.mode,
             content=payload.content,
         )
-        enriched, _, _ = self._prepare_restaurant_for_output(
-            restaurant=restaurant,
-            budget="50以内",
-            distance="骑车15分钟内",
-            scene="宿舍聚餐",
-            force_refresh=True,
-        )
+        enriched, _, _ = self._prepare_restaurant_for_output(restaurant)
         self.restaurant_cache[payload.restaurant_id] = enriched
         sample_review = reviews[0]["content"] if reviews else None
         return ReviewImportResponse(
             restaurant_id=payload.restaurant_id,
             imported_count=len(reviews),
             review_source="imported",
+            import_mode=payload.mode,
             sample_review=sample_review,
         )
 
     def submit_review_feedback(
         self, payload: ReviewFeedbackRequest
     ) -> ReviewFeedbackResponse | None:
-        restaurant = self.restaurant_cache.get(payload.restaurant_id)
-        if restaurant is None:
-            restaurant = self.source_service.get_cached_restaurant(payload.restaurant_id)
-        if restaurant is None and settings.use_mock_fallback:
-            restaurant = self._find_mock_restaurant(payload.restaurant_id)
+        restaurant = self._resolve_restaurant(payload.restaurant_id)
         if restaurant is None:
             return None
 
@@ -257,13 +234,7 @@ class RecommendationService:
             rating=payload.rating,
             content=payload.content,
         )
-        enriched, _, _ = self._prepare_restaurant_for_output(
-            restaurant=restaurant,
-            budget="50以内",
-            distance="骑车15分钟内",
-            scene="宿舍聚餐",
-            force_refresh=True,
-        )
+        enriched, _, _ = self._prepare_restaurant_for_output(restaurant)
         self.restaurant_cache[payload.restaurant_id] = enriched
         return ReviewFeedbackResponse(
             restaurant_id=payload.restaurant_id,
@@ -301,6 +272,20 @@ class RecommendationService:
     def _find_mock_restaurant(self, restaurant_id: str) -> dict | None:
         return next((item for item in MOCK_RESTAURANTS if item["id"] == restaurant_id), None)
 
+    def _resolve_restaurant(self, restaurant_id: str) -> dict | None:
+        restaurant = self.restaurant_cache.get(restaurant_id)
+        if restaurant is not None:
+            return restaurant
+        restaurant = self.source_service.get_cached_restaurant(restaurant_id)
+        if restaurant is not None:
+            return restaurant
+        mock_restaurant = self._find_mock_restaurant(restaurant_id)
+        if mock_restaurant is not None:
+            # Direct demo links such as /restaurant-view?id=r001 should remain
+            # usable even when mock fallback is disabled for recommendation lists.
+            return {**mock_restaurant, "source": "mock"}
+        return None
+
     def _enrich_with_reviews(self, restaurant: dict) -> dict:
         enriched = restaurant.copy()
         reviews, review_source = self.review_source_service.fetch_reviews(enriched)
@@ -332,12 +317,7 @@ class RecommendationService:
 
     def _prepare_restaurant_for_output(
         self,
-        *,
         restaurant: dict,
-        budget: str,
-        distance: str,
-        scene: str,
-        force_refresh: bool = False,
     ) -> tuple[dict, list[str], list[str]]:
         enriched = self._enrich_with_reviews(restaurant)
         tags, risk_flags = self._build_tags(enriched)
@@ -392,6 +372,7 @@ class RecommendationService:
         return "评价还在积累"
 
     def _restaurant_card_sort_key(self, item: RestaurantCard) -> tuple[int, int, int, int]:
+        # NOTE: tone_priority is mirrored in recommendations.js — keep in sync.
         tone_priority = {
             "大家挺推荐": 3,
             "最近讨论不少": 2,

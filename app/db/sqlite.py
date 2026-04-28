@@ -8,12 +8,23 @@ class SQLiteStore:
     def __init__(self) -> None:
         self.db_path = Path(settings.sqlite_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self._conn: sqlite3.Connection | None = None
         self._initialize()
 
     def _connect(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(self.db_path)
-        connection.row_factory = sqlite3.Row
-        return connection
+        """Return a persistent connection, creating it on first use."""
+        if self._conn is None:
+            self._conn = sqlite3.connect(
+                self.db_path, check_same_thread=False,
+            )
+            self._conn.row_factory = sqlite3.Row
+        return self._conn
+
+    def close(self) -> None:
+        """Close the persistent connection (call on shutdown)."""
+        if self._conn is not None:
+            self._conn.close()
+            self._conn = None
 
     def _initialize(self) -> None:
         with self._connect() as connection:
@@ -26,13 +37,20 @@ class SQLiteStore:
                     name TEXT NOT NULL,
                     category TEXT NOT NULL,
                     address TEXT NOT NULL,
+                    raw_type TEXT DEFAULT '',
                     avg_price INTEGER NOT NULL,
+                    avg_price_known INTEGER DEFAULT 1,
                     business_hours TEXT NOT NULL,
                     distance_meters INTEGER NOT NULL,
+                    lng REAL,
+                    lat REAL,
+                    walking_minutes INTEGER,
+                    riding_minutes INTEGER,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
                 """
             )
+            self._ensure_restaurant_columns(connection)
             connection.execute(
                 """
                 CREATE TABLE IF NOT EXISTS imported_reviews (
@@ -58,6 +76,23 @@ class SQLiteStore:
                 """
             )
 
+    def _ensure_restaurant_columns(self, connection: sqlite3.Connection) -> None:
+        rows = connection.execute("PRAGMA table_info(restaurants)").fetchall()
+        existing_columns = {row["name"] for row in rows}
+        migrations = {
+            "raw_type": "ALTER TABLE restaurants ADD COLUMN raw_type TEXT DEFAULT ''",
+            "avg_price_known": (
+                "ALTER TABLE restaurants ADD COLUMN avg_price_known INTEGER DEFAULT 1"
+            ),
+            "lng": "ALTER TABLE restaurants ADD COLUMN lng REAL",
+            "lat": "ALTER TABLE restaurants ADD COLUMN lat REAL",
+            "walking_minutes": "ALTER TABLE restaurants ADD COLUMN walking_minutes INTEGER",
+            "riding_minutes": "ALTER TABLE restaurants ADD COLUMN riding_minutes INTEGER",
+        }
+        for column, statement in migrations.items():
+            if column not in existing_columns:
+                connection.execute(statement)
+
     def upsert_restaurants(self, restaurants: list[dict]) -> None:
         if not restaurants:
             return
@@ -66,18 +101,26 @@ class SQLiteStore:
                 """
                 INSERT INTO restaurants (
                     id, external_id, source, name, category, address,
-                    avg_price, business_hours, distance_meters, updated_at
+                    raw_type, avg_price, avg_price_known, business_hours,
+                    distance_meters, lng, lat, walking_minutes, riding_minutes,
+                    updated_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                 ON CONFLICT(id) DO UPDATE SET
                     external_id = excluded.external_id,
                     source = excluded.source,
                     name = excluded.name,
                     category = excluded.category,
                     address = excluded.address,
+                    raw_type = excluded.raw_type,
                     avg_price = excluded.avg_price,
+                    avg_price_known = excluded.avg_price_known,
                     business_hours = excluded.business_hours,
                     distance_meters = excluded.distance_meters,
+                    lng = excluded.lng,
+                    lat = excluded.lat,
+                    walking_minutes = excluded.walking_minutes,
+                    riding_minutes = excluded.riding_minutes,
                     updated_at = CURRENT_TIMESTAMP
                 """,
                 [
@@ -88,9 +131,15 @@ class SQLiteStore:
                         item["name"],
                         item["category"],
                         item["address"],
+                        item.get("raw_type", ""),
                         int(item["avg_price"]),
+                        1 if item.get("avg_price_known", True) else 0,
                         item["business_hours"],
                         int(item["distance_meters"]),
+                        item.get("lng"),
+                        item.get("lat"),
+                        item.get("walking_minutes"),
+                        item.get("riding_minutes"),
                     )
                     for item in restaurants
                 ],
@@ -101,7 +150,9 @@ class SQLiteStore:
             row = connection.execute(
                 """
                 SELECT id, external_id, source, name, category, address,
-                       avg_price, business_hours, distance_meters, updated_at
+                       raw_type, avg_price, avg_price_known, business_hours,
+                       distance_meters, lng, lat, walking_minutes, riding_minutes,
+                       updated_at
                 FROM restaurants
                 WHERE id = ?
                 """,
@@ -116,9 +167,15 @@ class SQLiteStore:
             "name": row["name"],
             "category": row["category"],
             "address": row["address"],
+            "raw_type": row["raw_type"] or "",
             "avg_price": int(row["avg_price"]),
+            "avg_price_known": bool(row["avg_price_known"]),
             "business_hours": row["business_hours"],
             "distance_meters": int(row["distance_meters"]),
+            "lng": row["lng"],
+            "lat": row["lat"],
+            "walking_minutes": row["walking_minutes"],
+            "riding_minutes": row["riding_minutes"],
         }
 
     def list_cached_restaurants(self, limit: int = 50) -> list[dict]:
@@ -179,6 +236,38 @@ class SQLiteStore:
                     for review in reviews
                 ],
             )
+
+    def append_reviews(self, restaurant_id: str, reviews: list[dict]) -> int:
+        if not reviews:
+            return 0
+        existing = {
+            (item["rating"], item["content"], item["days_ago"])
+            for item in self.fetch_reviews(restaurant_id)
+        }
+        new_reviews = [
+            review
+            for review in reviews
+            if (review["rating"], review["content"], review["days_ago"]) not in existing
+        ]
+        if not new_reviews:
+            return 0
+        with self._connect() as connection:
+            connection.executemany(
+                """
+                INSERT INTO imported_reviews (restaurant_id, rating, content, days_ago)
+                VALUES (?, ?, ?, ?)
+                """,
+                [
+                    (
+                        restaurant_id,
+                        int(review["rating"]),
+                        str(review["content"]),
+                        int(review["days_ago"]),
+                    )
+                    for review in new_reviews
+                ],
+            )
+        return len(new_reviews)
 
     def append_review(self, restaurant_id: str, review: dict) -> None:
         with self._connect() as connection:

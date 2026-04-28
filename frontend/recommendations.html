@@ -7,10 +7,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=Outfit:wght@300;400;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/assets/styles.css?v=20260426" />
+    <link rel="stylesheet" href="/assets/styles.css?v=20260428fix1" />
   </head>
   <body class="page-list">
     <div class="background-grid"></div>
@@ -27,7 +27,8 @@
       <section class="panel">
         <div class="toolbar">
           <div class="sort-tabs">
-            <button class="sort-tab is-active" data-sort="review_count">评论更多</button>
+            <button class="sort-tab is-active" data-sort="recommended">综合推荐</button>
+            <button class="sort-tab" data-sort="review_count">评论更多</button>
             <button class="sort-tab" data-sort="avg_price">预算更友好</button>
             <button class="sort-tab" data-sort="distance_meters">更方便到达</button>
           </div>
@@ -41,6 +42,7 @@
       </section>
     </main>
 
-    <script src="/assets/recommendations.js?v=20260426"></script>
+    <script src="/assets/shared.js?v=20260428fix1"></script>
+    <script src="/assets/recommendations.js?v=20260428fix1"></script>
   </body>
 </html>

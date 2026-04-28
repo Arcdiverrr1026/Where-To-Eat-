@@ -7,10 +7,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=Outfit:wght@300;400;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/assets/styles.css?v=20260426" />
+    <link rel="stylesheet" href="/assets/styles.css?v=20260428fix1" />
   </head>
   <body class="page-import">
     <div class="background-grid"></div>
@@ -42,6 +42,14 @@
               <div class="chip-grid compact" data-group="import-format">
                 <label class="chip chip-active"><input type="radio" name="format" value="json" checked />JSON</label>
                 <label class="chip"><input type="radio" name="format" value="csv" />CSV</label>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <span class="field-label">导入方式</span>
+              <div class="chip-grid compact" data-group="import-mode">
+                <label class="chip chip-active"><input type="radio" name="mode" value="append" checked />追加并去重</label>
+                <label class="chip"><input type="radio" name="mode" value="replace" />覆盖旧评论</label>
               </div>
             </div>
 
@@ -80,6 +88,7 @@
       </section>
     </main>
 
-    <script src="/assets/review-import.js?v=20260426"></script>
+    <script src="/assets/shared.js?v=20260428fix1"></script>
+    <script src="/assets/review-import.js?v=20260428fix1"></script>
   </body>
 </html>

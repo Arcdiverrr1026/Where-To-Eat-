@@ -10,7 +10,9 @@ const feedbackContent = document.getElementById("feedback-content");
 const feedbackResult = document.getElementById("feedback-result");
 const feedbackSubmit = document.getElementById("feedback-submit");
 const publicReviewsNode = document.getElementById("public-reviews");
-const feedbackChipGroups = document.querySelectorAll('[data-group="feedback-rating"]');
+
+initChipGroups('[data-group="feedback-rating"]');
+syncChipVisuals('[data-group="feedback-rating"]');
 
 const RATING_LABELS = {
   1: "不推荐",
@@ -21,46 +23,36 @@ const RATING_LABELS = {
 };
 
 function listMarkup(items, className = "reason-list") {
-  return `<ul class="${className}">${items.map((item) => `<li>${item}</li>`).join("")}</ul>`;
+  const safeItems = Array.isArray(items) ? items : [];
+  return `<ul class="${className}">${safeItems.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
 }
 
 function tagsMarkup(items, type = "tag") {
-  return items.map((item) => `<span class="${type}">${item}</span>`).join("");
+  return renderPills(items, type);
 }
 
-feedbackChipGroups.forEach((group) => {
-  const chips = group.querySelectorAll(".chip");
-  chips.forEach((chip) => {
-    const input = chip.querySelector("input");
-    input.addEventListener("change", () => {
-      chips.forEach((item) => item.classList.remove("chip-active"));
-      if (input.checked) chip.classList.add("chip-active");
-    });
-    chip.classList.toggle("chip-active", input.checked);
-  });
-});
-
 function renderPublicReviews(items) {
-  if (!items.length) {
+  const safeItems = Array.isArray(items) ? items : [];
+  if (!safeItems.length) {
     publicReviewsNode.innerHTML = `<article class="restaurant-card empty-state"><p class="card-meta">这家店还没有公开评论，你可以写下第一条。</p></article>`;
     return;
   }
 
-  publicReviewsNode.innerHTML = items
+  publicReviewsNode.innerHTML = safeItems
     .map(
       (item) => `
         <article class="restaurant-card">
           <div class="card-top">
             <div class="card-title-wrap">
               <h3>匿名同学</h3>
-              <p class="card-meta">${item.created_at || "未知时间"} · 距今 ${item.days_ago} 天</p>
+              <p class="card-meta">${escapeHtml(item.created_at || "未知时间")} · 距今 ${escapeHtml(item.days_ago)} 天</p>
             </div>
             <div class="score-badge score-badge-soft">
               <span>这条评价</span>
-              <strong style="font-size:1rem">${RATING_LABELS[item.rating] || "还行可吃"}</strong>
+              <strong style="font-size:1rem">${escapeHtml(RATING_LABELS[item.rating] || "还行可吃")}</strong>
             </div>
           </div>
-          <p>${item.content}</p>
+          <p>${escapeHtml(item.content)}</p>
         </article>
       `
     )
@@ -70,22 +62,22 @@ function renderPublicReviews(items) {
 function renderDetail(data) {
   const backHref = backParams.toString() ? `/recommendations?${backParams.toString()}` : "/";
   const importHref = backParams.toString()
-    ? `/review-import?id=${data.restaurant_id}&${backParams.toString()}`
-    : `/review-import?id=${data.restaurant_id}`;
+    ? `/review-import?id=${safeUrlParam(data.restaurant_id)}&${backParams.toString()}`
+    : `/review-import?id=${safeUrlParam(data.restaurant_id)}`;
 
   hero.innerHTML = `
     <a class="ghost-link" href="${backHref}">返回榜单</a>
     <p class="eyebrow">Campus Comment Detail</p>
-    <h1 class="detail-title">${data.name}</h1>
-    <p class="hero-text">${data.category} · ${data.travel_text} · ${data.price_text} · ${data.business_hours}</p>
+    <h1 class="detail-title">${escapeHtml(data.name)}</h1>
+    <p class="hero-text">${escapeHtml(data.category)} · ${escapeHtml(data.travel_text)} · ${escapeHtml(data.price_text)} · ${escapeHtml(data.business_hours)}</p>
     <div class="headline-metrics">
       ${tagsMarkup(data.tags, "tag")}
       ${tagsMarkup(data.risk_flags, "risk")}
     </div>
     <div class="headline-metrics">
-      <span class="filter-pill">当前数据来源：${data.review_source}</span>
-      <span class="filter-pill">已收录评论：${data.review_count}</span>
-      <span class="filter-pill">${data.price_source}</span>
+      <span class="filter-pill">当前数据来源：${escapeHtml(data.review_source)}</span>
+      <span class="filter-pill">已收录评论：${escapeHtml(data.review_count)}</span>
+      <span class="filter-pill">${escapeHtml(data.price_source)}</span>
       <a class="ghost-action" href="${importHref}">批量导入历史评论</a>
     </div>
   `;
@@ -121,10 +113,10 @@ function renderDetail(data) {
 
       <section class="detail-block">
         <p class="eyebrow">Scene Fit</p>
-        <h2>适合什么场景</h2>
-        <ul class="kv-list">
-          ${Object.entries(data.scene_fit)
-            .map(([key, value]) => `<li>${key}：${value}</li>`)
+          <h2>适合什么场景</h2>
+          <ul class="kv-list">
+          ${Object.entries(data.scene_fit || {})
+            .map(([key, value]) => `<li>${escapeHtml(key)}：${escapeHtml(value)}</li>`)
             .join("")}
         </ul>
       </section>
@@ -158,12 +150,17 @@ async function fetchDetail() {
   `;
 
   try {
-    const response = await fetch(`/api/restaurants/${restaurantId}`);
+    const response = await fetch(`/api/restaurants/${safeUrlParam(restaurantId)}`);
+    if (response.status === 404) {
+      throw new Error("not_found");
+    }
     if (!response.ok) throw new Error("request_failed");
     const data = await response.json();
     renderDetail(data);
   } catch (error) {
-    statusNode.textContent = "店铺详情加载失败，请返回重试。";
+    statusNode.textContent = error.message === "not_found"
+      ? "找不到这家店铺。请先从推荐榜单打开店铺，或确认店铺 ID 是否正确。"
+      : "店铺详情加载失败，请返回重试。";
   }
 }
 

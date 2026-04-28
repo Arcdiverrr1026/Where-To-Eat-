@@ -2,6 +2,7 @@ import math
 
 from app.clients.amap import AmapClient
 from app.core.config import settings
+from app.core.pricing import estimate_value_base
 from app.data.mock_restaurants import MOCK_RESTAURANTS
 from app.db.sqlite import SQLiteStore
 
@@ -16,24 +17,27 @@ class RestaurantSourceService:
         "面食": ["面馆", "拉面", "拌面", "面食"],
         "奶茶甜品": ["奶茶", "甜品", "饮品", "糖水"],
     }
-    def __init__(self) -> None:
+    def __init__(self, store: SQLiteStore | None = None) -> None:
         self.amap_client = AmapClient()
-        self.store = SQLiteStore()
+        self.store = store if store is not None else SQLiteStore()
+
+    def close(self) -> None:
+        self.amap_client.close()
 
     def fetch_candidates(self, *, lat: float, lng: float, category: str) -> tuple[list[dict], str]:
-        if self.amap_client.is_configured():
-            candidates = self._fetch_from_amap(lat=lat, lng=lng, category=category)
-            if candidates:
-                self.store.upsert_restaurants(candidates)
-                return candidates, "amap"
-
-        if settings.use_mock_fallback:
-            candidates = self._fetch_from_mock(lat=lat, lng=lng, category=category)
-            self.store.upsert_restaurants(candidates)
-            return candidates, "mock"
-        return [], "none"
+        candidates, source, _ = self._fetch_candidates_result(
+            lat=lat,
+            lng=lng,
+            category=category,
+        )
+        return candidates, source
 
     def fetch_candidates_with_debug(
+        self, *, lat: float, lng: float, category: str
+    ) -> tuple[list[dict], str, dict]:
+        return self._fetch_candidates_result(lat=lat, lng=lng, category=category)
+
+    def _fetch_candidates_result(
         self, *, lat: float, lng: float, category: str
     ) -> tuple[list[dict], str, dict]:
         if self.amap_client.is_configured():
@@ -71,10 +75,6 @@ class RestaurantSourceService:
             self.store.upsert_restaurants(candidates)
         return candidates
 
-    def _fetch_from_amap(self, *, lat: float, lng: float, category: str) -> list[dict]:
-        restaurants, _ = self._fetch_from_amap_with_debug(lat=lat, lng=lng, category=category)
-        return restaurants
-
     def _fetch_from_amap_with_debug(
         self, *, lat: float, lng: float, category: str
     ) -> tuple[list[dict], dict]:
@@ -106,6 +106,8 @@ class RestaurantSourceService:
                     "deduped_new_count": len(seen_ids) - before_count,
                 }
             )
+            if len(restaurants) >= settings.amap_target_candidate_count:
+                break
         restaurants.sort(key=lambda item: item["distance_meters"])
         return restaurants, {
             "total_fetched": total_fetched,
@@ -133,7 +135,7 @@ class RestaurantSourceService:
 
     def _normalize_amap_restaurant(self, restaurant, category: str) -> dict:
         avg_price = restaurant.avg_price
-        value_for_money_signal = self._estimate_value_signal(avg_price)
+        value_for_money_signal = estimate_value_base(avg_price)
         portion_signal = 78 if avg_price <= 50 else 70
         normalized = {
             "id": f"amap_{restaurant.source_id}",
@@ -179,7 +181,7 @@ class RestaurantSourceService:
                 category=restaurant.category,
             ),
         }
-        return self._apply_default_signals(normalized)
+        return normalized
 
     def _apply_default_signals(self, restaurant: dict) -> dict:
         restaurant.setdefault("external_id", None)
@@ -199,7 +201,7 @@ class RestaurantSourceService:
         restaurant.setdefault("praise_detail_ratio", 58)
         restaurant.setdefault("opinion_spread", 68)
         restaurant.setdefault(
-            "value_for_money_signal", self._estimate_value_signal(restaurant["avg_price"])
+            "value_for_money_signal", estimate_value_base(restaurant["avg_price"])
         )
         restaurant.setdefault("portion_signal", 78 if restaurant["avg_price"] <= 50 else 70)
         restaurant.setdefault("queue_pressure", 35)
@@ -226,16 +228,6 @@ class RestaurantSourceService:
         return restaurant
 
 
-    def _estimate_value_signal(self, avg_price: int) -> int:
-        if avg_price <= 20:
-            return 90
-        if avg_price <= 35:
-            return 84
-        if avg_price <= 50:
-            return 76
-        if avg_price <= 70:
-            return 68
-        return 58
 
     def _build_base_reasons(self, distance_meters: int, avg_price: int) -> list[str]:
         reasons: list[str] = []

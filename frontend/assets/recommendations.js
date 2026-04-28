@@ -8,7 +8,7 @@ const mapLink = document.getElementById("map-link");
 const backToHomeLink = document.getElementById("back-to-home-link");
 
 let restaurants = [];
-let activeSort = "review_count";
+let activeSort = "recommended";
 
 const TONE_CLASS = {
   "大家挺推荐": "tag",
@@ -28,7 +28,7 @@ function renderFilterSummary() {
   ].filter(Boolean);
 
   filterSummary.innerHTML = labels
-    .map((item) => `<span class="filter-pill">${item}</span>`)
+    .map((item) => `<span class="filter-pill">${escapeHtml(item)}</span>`)
     .join("");
 }
 
@@ -42,7 +42,8 @@ function sortRestaurants(items) {
     sorted.sort((a, b) => {
       if (b.review_count !== a.review_count) return b.review_count - a.review_count;
       if (a.comment_tone !== b.comment_tone) {
-        const tonePriority = {
+      // NOTE: Keep in sync with _restaurant_card_sort_key in recommendation_service.py
+      const tonePriority = {
           "大家挺推荐": 3,
           "最近讨论不少": 2,
           "评价还在积累": 1,
@@ -61,7 +62,7 @@ function sortRestaurants(items) {
 }
 
 function tonePill(label) {
-  return `<span class="${TONE_CLASS[label] || "filter-pill"}">${label}</span>`;
+  return `<span class="${TONE_CLASS[label] || "filter-pill"}">${escapeHtml(label)}</span>`;
 }
 
 function renderList() {
@@ -77,36 +78,37 @@ function renderList() {
 
   const items = sortRestaurants(restaurants);
   listContainer.innerHTML = items
-    .map(
-      (restaurant) => `
+    .map((restaurant) => {
+      const detailUrl = `/restaurant-view?id=${safeUrlParam(restaurant.restaurant_id)}&${params.toString()}`;
+      return `
         <article class="restaurant-card">
           <div class="card-top">
             <div class="card-title-wrap">
-              <h3>${restaurant.name}</h3>
-              <p class="card-meta">${restaurant.travel_text} · ${restaurant.price_text} · ${restaurant.review_count} 条评论</p>
+              <h3>${escapeHtml(restaurant.name)}</h3>
+              <p class="card-meta">${escapeHtml(restaurant.travel_text)} · ${escapeHtml(restaurant.price_text)} · ${escapeHtml(restaurant.review_count)} 条评论</p>
             </div>
             <div class="score-badge score-badge-soft">
               <span>最近风向</span>
-              <strong style="font-size:1rem">${restaurant.comment_tone}</strong>
+              <strong style="font-size:1rem">${escapeHtml(restaurant.comment_tone)}</strong>
             </div>
           </div>
           <div class="tag-row">
-            <span class="filter-pill">${restaurant.scene_match}</span>
+            <span class="filter-pill">${escapeHtml(restaurant.scene_match)}</span>
             ${tonePill(restaurant.comment_tone)}
           </div>
           <div class="tag-row">
-            ${restaurant.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}
-            ${restaurant.risk_flags.map((tag) => `<span class="risk">${tag}</span>`).join("")}
+            ${renderPills(restaurant.tags, "tag")}
+            ${renderPills(restaurant.risk_flags, "risk")}
           </div>
-          <p><strong>大家最近在说：</strong>${restaurant.summary}</p>
-          <p class="card-meta">店铺来源：${restaurant.source} · ${restaurant.price_source}</p>
+          <p><strong>大家最近在说：</strong>${escapeHtml(restaurant.summary)}</p>
+          <p class="card-meta">店铺来源：${escapeHtml(restaurant.source)} · ${escapeHtml(restaurant.price_source)}</p>
           <div class="card-actions">
-            <a class="secondary-button" href="/restaurant-view?id=${restaurant.restaurant_id}&${params.toString()}">看详细评价</a>
+            <a class="secondary-button" href="${detailUrl}">看详细评价</a>
             <a class="secondary-button" href="/map-view?${params.toString()}">再看位置</a>
           </div>
         </article>
-      `
-    )
+      `;
+    })
     .join("");
 }
 
@@ -130,16 +132,7 @@ async function fetchRecommendations() {
   renderLoadingState();
   mapLink.href = `/map-view?${params.toString()}`;
 
-  const payload = {
-    location: {
-      lat: Number(params.get("lat") || 31.2304),
-      lng: Number(params.get("lng") || 121.4737),
-    },
-    category: params.get("category") || "烧烤",
-    budget: params.get("budget") || "50以内",
-    distance: params.get("distance") || "步行10分钟内",
-    scene: params.get("scene") || "宿舍聚餐",
-  };
+  const payload = buildRecommendPayload(params);
 
   try {
     const response = await fetch("/api/recommend/restaurants", {
@@ -152,7 +145,7 @@ async function fetchRecommendations() {
 
     const data = await response.json();
     restaurants = data.list;
-    statusLine.textContent = `共找到 ${data.total} 家店，默认按“评论数量更多、最近更有讨论”排序`;
+    statusLine.textContent = `共找到 ${data.total} 家店，默认按“场景匹配、评论数量、最近风向”排序`;
     dataSource.textContent = restaurants[0] ? `当前店铺入口：${restaurants[0].source}` : "";
     renderList();
   } catch (error) {

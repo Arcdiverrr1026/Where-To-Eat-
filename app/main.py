@@ -1,19 +1,28 @@
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routes import router
+from app.api.routes import router, service
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BASE_DIR / "frontend"
 
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    yield
+    service.close()
+
+
 app = FastAPI(
     title="Where To Eat API",
     version="0.1.0",
     description="Restaurant recommendation API for campus dining decisions.",
+    lifespan=lifespan,
 )
 app.include_router(router)
 app.mount("/assets", StaticFiles(directory=FRONTEND_DIR / "assets"), name="assets")

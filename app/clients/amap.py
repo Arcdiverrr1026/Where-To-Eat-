@@ -28,12 +28,20 @@ class AmapClient:
     base_url = "https://restapi.amap.com/v5/place/around"
     walking_route_url = "https://restapi.amap.com/v3/direction/walking"
     riding_route_url = "https://restapi.amap.com/v4/direction/bicycling"
+    estimated_walking_speed_meters_per_minute = 75
+    estimated_riding_speed_meters_per_minute = 250
 
     def __init__(self) -> None:
         self.api_key = settings.amap_api_key
+        self._client: httpx.Client | None = None
 
     def is_configured(self) -> bool:
         return bool(self.api_key)
+
+    def close(self) -> None:
+        if self._client is not None:
+            self._client.close()
+            self._client = None
 
     def search_nearby_restaurants(
         self,
@@ -47,7 +55,9 @@ class AmapClient:
     ) -> list[AmapRestaurantCandidate]:
         if not self.is_configured():
             return []
+        client = self._get_client()
         pois = self._fetch_pois(
+            client=client,
             lat=lat,
             lng=lng,
             keyword=keyword,
@@ -78,8 +88,21 @@ class AmapClient:
                 lng=self._extract_lng(poi),
                 lat=self._extract_lat(poi),
             )
-            if candidate.lng is not None and candidate.lat is not None:
+            candidate.walking_minutes = self._estimate_minutes_from_distance(
+                candidate.distance_meters,
+                speed_meters_per_minute=self.estimated_walking_speed_meters_per_minute,
+            )
+            candidate.riding_minutes = self._estimate_minutes_from_distance(
+                candidate.distance_meters,
+                speed_meters_per_minute=self.estimated_riding_speed_meters_per_minute,
+            )
+            if (
+                settings.amap_fetch_route_details
+                and candidate.lng is not None
+                and candidate.lat is not None
+            ):
                 candidate.walking_minutes = self._estimate_route_minutes(
+                    client=client,
                     origin_lat=lat,
                     origin_lng=lng,
                     destination_lat=candidate.lat,
@@ -87,6 +110,7 @@ class AmapClient:
                     mode="walking",
                 )
                 candidate.riding_minutes = self._estimate_route_minutes(
+                    client=client,
                     origin_lat=lat,
                     origin_lng=lng,
                     destination_lat=candidate.lat,
@@ -100,6 +124,7 @@ class AmapClient:
     def _fetch_pois(
         self,
         *,
+        client: httpx.Client,
         lat: float,
         lng: float,
         keyword: str,
@@ -117,26 +142,25 @@ class AmapClient:
             "show_fields": "business,indoor,photos",
         }
         pois: list[dict] = []
-        with httpx.Client(timeout=10.0) as client:
-            for page_num in range(1, max(page_count, 1) + 1):
-                try:
-                    response = client.get(
-                        self.base_url,
-                        params={**params_base, "page_num": page_num},
-                    )
-                    response.raise_for_status()
-                    payload = response.json()
-                except (httpx.HTTPError, JSONDecodeError, ValueError):
-                    break
+        for page_num in range(1, max(page_count, 1) + 1):
+            try:
+                response = client.get(
+                    self.base_url,
+                    params={**params_base, "page_num": page_num},
+                )
+                response.raise_for_status()
+                payload = response.json()
+            except (httpx.HTTPError, JSONDecodeError, ValueError):
+                break
 
-                if not isinstance(payload, dict):
-                    break
-                page_pois = payload.get("pois", [])
-                if not isinstance(page_pois, list) or not page_pois:
-                    break
-                pois.extend(page_pois)
-                if len(page_pois) < page_size:
-                    break
+            if not isinstance(payload, dict):
+                break
+            page_pois = payload.get("pois", [])
+            if not isinstance(page_pois, list) or not page_pois:
+                break
+            pois.extend(page_pois)
+            if len(page_pois) < page_size:
+                break
         return pois
 
     def _extract_price(self, poi: dict) -> tuple[int, bool]:
@@ -197,6 +221,7 @@ class AmapClient:
     def _estimate_route_minutes(
         self,
         *,
+        client: httpx.Client,
         origin_lat: float,
         origin_lng: float,
         destination_lat: float,
@@ -213,18 +238,32 @@ class AmapClient:
         }
         target_url = self.walking_route_url if mode == "walking" else self.riding_route_url
 
-        with httpx.Client(timeout=10.0) as client:
-            try:
-                response = client.get(target_url, params=params)
-                response.raise_for_status()
-                payload = response.json()
-            except (httpx.HTTPError, JSONDecodeError, ValueError):
-                return None
+        try:
+            response = client.get(target_url, params=params)
+            response.raise_for_status()
+            payload = response.json()
+        except (httpx.HTTPError, JSONDecodeError, ValueError):
+            return None
 
         duration_seconds = self._extract_route_duration_seconds(payload, mode)
         if duration_seconds is None:
             return None
         return max(1, round(duration_seconds / 60))
+
+    def _get_client(self) -> httpx.Client:
+        if self._client is None:
+            self._client = httpx.Client(timeout=settings.amap_http_timeout_seconds)
+        return self._client
+
+    def _estimate_minutes_from_distance(
+        self,
+        distance_meters: int,
+        *,
+        speed_meters_per_minute: int,
+    ) -> int | None:
+        if distance_meters <= 0 or speed_meters_per_minute <= 0:
+            return None
+        return max(1, round(distance_meters / speed_meters_per_minute))
 
     def _extract_route_duration_seconds(self, payload: dict, mode: str) -> int | None:
         if not isinstance(payload, dict):

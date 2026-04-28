@@ -21,34 +21,34 @@ function renderMapFilters() {
   ].filter(Boolean);
 
   mapSummary.innerHTML = labels
-    .map((item) => `<span class="filter-pill">${item}</span>`)
+    .map((item) => `<span class="filter-pill">${escapeHtml(item)}</span>`)
     .join("");
 }
 
 function detailHref(restaurantId) {
-  return `/restaurant-view?id=${restaurantId}&${mapParams.toString()}`;
+  return `/restaurant-view?id=${safeUrlParam(restaurantId)}&${mapParams.toString()}`;
 }
 
 function renderSelection(item) {
   mapSelection.innerHTML = `
     <div class="card-top">
       <div class="card-title-wrap">
-        <h3>${item.name}</h3>
-        <p class="card-meta">${item.travel_text} · ${item.price_text} · ${item.review_count} 条评论</p>
+        <h3>${escapeHtml(item.name)}</h3>
+        <p class="card-meta">${escapeHtml(item.travel_text)} · ${escapeHtml(item.price_text)} · ${escapeHtml(item.review_count)} 条评论</p>
       </div>
       <div class="score-badge score-badge-soft">
         <span>最近风向</span>
-        <strong style="font-size:1rem">${item.comment_tone}</strong>
+        <strong style="font-size:1rem">${escapeHtml(item.comment_tone)}</strong>
       </div>
     </div>
     <div class="tag-row" style="margin-top:14px">
-      <span class="filter-pill">${item.comment_tone}</span>
-      <span class="filter-pill">${item.scene_match}</span>
-      <span class="filter-pill">${item.price_source}</span>
-      ${item.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}
-      ${item.risk_flags.map((tag) => `<span class="risk">${tag}</span>`).join("")}
+      <span class="filter-pill">${escapeHtml(item.comment_tone)}</span>
+      <span class="filter-pill">${escapeHtml(item.scene_match)}</span>
+      <span class="filter-pill">${escapeHtml(item.price_source)}</span>
+      ${renderPills(item.tags, "tag")}
+      ${renderPills(item.risk_flags, "risk")}
     </div>
-    <p style="margin-top:14px"><strong>大家最近在说：</strong>${item.summary}</p>
+    <p style="margin-top:14px"><strong>大家最近在说：</strong>${escapeHtml(item.summary)}</p>
     <div class="card-actions" style="margin-top:16px">
       <a class="secondary-button" href="${detailHref(item.restaurant_id)}">查看详情</a>
       <a class="secondary-button" href="/recommendations?${mapParams.toString()}">回到榜单</a>
@@ -60,13 +60,13 @@ function renderRestaurantList(restaurants) {
   mapRestaurantList.innerHTML = restaurants
     .map(
       (item, index) => `
-        <button class="map-list-item ${item.restaurant_id === activeRestaurantId ? "is-active" : ""}" data-id="${item.restaurant_id}">
+        <button class="map-list-item ${item.restaurant_id === activeRestaurantId ? "is-active" : ""}" data-id="${escapeHtml(item.restaurant_id)}">
           <div class="map-list-index">${index + 1}</div>
           <div class="map-list-copy">
-            <strong>${item.name}</strong>
-            <span>${item.travel_text} · ${item.review_count} 条评论 · ${item.scene_match}</span>
+            <strong>${escapeHtml(item.name)}</strong>
+            <span>${escapeHtml(item.travel_text)} · ${escapeHtml(item.review_count)} 条评论 · ${escapeHtml(item.scene_match)}</span>
           </div>
-          <div class="map-list-score">${item.review_count}</div>
+          <div class="map-list-score">${escapeHtml(item.review_count)}</div>
         </button>
       `
     )
@@ -102,8 +102,8 @@ function updateMapSelection(restaurant) {
 
   infoWindow.setContent(`
     <div class="map-info-window">
-      <strong>${restaurant.name}</strong>
-      <p>${restaurant.travel_text} · ${restaurant.price_text} · ${restaurant.review_count} 条评论</p>
+      <strong>${escapeHtml(restaurant.name)}</strong>
+      <p>${escapeHtml(restaurant.travel_text)} · ${escapeHtml(restaurant.price_text)} · ${escapeHtml(restaurant.review_count)} 条评论</p>
     </div>
   `);
   infoWindow.open(mapInstance, [restaurant.lng, restaurant.lat]);
@@ -213,16 +213,7 @@ function renderRealMap(restaurants, payload, config) {
 
 async function fetchMapRestaurants() {
   renderMapFilters();
-  const payload = {
-    location: {
-      lat: Number(mapParams.get("lat") || 31.2304),
-      lng: Number(mapParams.get("lng") || 121.4737),
-    },
-    category: mapParams.get("category") || "烧烤",
-    budget: mapParams.get("budget") || "50以内",
-    distance: mapParams.get("distance") || "步行10分钟内",
-    scene: mapParams.get("scene") || "宿舍聚餐",
-  };
+  const payload = buildRecommendPayload(mapParams);
 
   try {
     const [response, configResponse] = await Promise.all([
