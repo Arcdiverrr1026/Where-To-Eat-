@@ -82,22 +82,23 @@ ADMIN_TOKEN=change_this_for_local_admin
 
 ## Setup
 
-项目当前使用现有虚拟环境。若本机已存在 `.venv`，可直接安装依赖：
+项目当前使用 `uv` 管理依赖与虚拟环境。首次进入项目后执行：
 
 ```bash
-cd "/Users/arcdiverrr/python program/where to eat"
-./.venv/bin/pip install -e .
+cd "/Users/lucent/PycharmProjects/Where-To-Eat-"
+uv sync
 ```
 
-如果你已经按当前开发过程装好了依赖，可以跳过这一步。
+这会根据 `pyproject.toml` 和仓库内提交的 `uv.lock` 创建或更新 `.venv` 并安装依赖。
+如果依赖声明有调整，重新执行一次 `uv sync` 即可。
 
 ## Bootstrap Demo Data
 
 首次启动前，建议先执行一次：
 
 ```bash
-cd "/Users/arcdiverrr/python program/where to eat"
-PYTHONPATH=. ./.venv/bin/python scripts/bootstrap_demo.py
+cd "/Users/lucent/PycharmProjects/Where-To-Eat-"
+uv run python scripts/bootstrap_demo.py
 ```
 
 这个脚本会：
@@ -112,8 +113,8 @@ PYTHONPATH=. ./.venv/bin/python scripts/bootstrap_demo.py
 如果你想把“自动抓取评价”与现有导入链路分开，可以使用：
 
 ```bash
-cd "/Users/arcdiverrr/python program/where to eat"
-PYTHONPATH=. ./.venv/bin/python scripts/fetch_reviews_experimental.py \
+cd "/Users/lucent/PycharmProjects/Where-To-Eat-"
+uv run python scripts/fetch_reviews_experimental.py \
   --restaurant-id r001 \
   --url 'https://example.com/restaurant-page' \
   --output /tmp/r001_reviews.json
@@ -122,7 +123,7 @@ PYTHONPATH=. ./.venv/bin/python scripts/fetch_reviews_experimental.py \
 如果只是先离线实验，也可以先保存 HTML 再解析：
 
 ```bash
-PYTHONPATH=. ./.venv/bin/python scripts/fetch_reviews_experimental.py \
+uv run python scripts/fetch_reviews_experimental.py \
   --restaurant-id r001 \
   --html-file /path/to/page.html \
   --import-to-db
@@ -138,8 +139,8 @@ PYTHONPATH=. ./.venv/bin/python scripts/fetch_reviews_experimental.py \
 ## Run
 
 ```bash
-cd "/Users/arcdiverrr/python program/where to eat"
-PYTHONPATH=. ./.venv/bin/uvicorn app.main:app --reload
+cd "/Users/lucent/PycharmProjects/Where-To-Eat-"
+uv run uvicorn app.main:app --reload
 ```
 
 启动后可访问：
@@ -202,6 +203,7 @@ rating,content,days_ago
 ## Notes
 
 - `data/where_to_eat.db` 是本地 SQLite 数据库，已加入 `.gitignore`
+- 依赖版本由 `uv.lock` 锁定，日常安装与同步请使用 `uv sync`
 - 导入评论和缓存餐厅都会写入 SQLite
 - 当前评论来源仍以 mock 与导入数据为主，真实平台评论抓取尚未接入
 - 当前前端为静态页面方案，适合原型、实习项目演示和快速联调

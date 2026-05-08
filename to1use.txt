@@ -1,7 +1,7 @@
   你本地现在可以直接这样跑：
 
-  cd "/Users/arcdiverrr/python program/where to eat"
-  ./.venv/bin/uvicorn app.main:app --reload
+  cd "/Users/lucent/PycharmProjects/Where-To-Eat-"
+  uv run uvicorn app.main:app
 
   然后打开：
 
