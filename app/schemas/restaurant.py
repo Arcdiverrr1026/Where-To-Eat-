@@ -1,11 +1,12 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 BudgetOption = Literal["20以内", "50以内", "70以内", "70以上"]
 DistanceOption = Literal["步行10分钟内", "骑车15分钟内", "3公里内"]
 SceneOption = Literal["一个人吃", "宿舍聚餐", "夜宵", "约会"]
+MAX_REVIEW_CONTENT_LENGTH = 500
 
 
 class UserLocation(BaseModel):
@@ -17,8 +18,28 @@ class RestaurantRecommendationRequest(BaseModel):
     location: UserLocation
     category: str = Field(..., description="Restaurant category")
     budget: BudgetOption
+    budget_min: int | None = Field(
+        default=None,
+        ge=0,
+        description="Optional custom minimum budget per person",
+    )
+    budget_max: int | None = Field(
+        default=None,
+        ge=0,
+        description="Optional custom maximum budget per person",
+    )
     distance: DistanceOption
     scene: SceneOption
+
+    @model_validator(mode="after")
+    def validate_budget_range(self) -> "RestaurantRecommendationRequest":
+        if (
+            self.budget_min is not None
+            and self.budget_max is not None
+            and self.budget_min > self.budget_max
+        ):
+            raise ValueError("budget_min must be less than or equal to budget_max")
+        return self
 
 
 class RestaurantCard(BaseModel):
@@ -82,6 +103,8 @@ class RestaurantDetailResponse(BaseModel):
     review_count: int
     name: str
     category: str
+    lng: float
+    lat: float
     address: str
     distance_meters: int
     distance_text: str
@@ -121,7 +144,12 @@ class ReviewImportResponse(BaseModel):
 class ReviewFeedbackRequest(BaseModel):
     restaurant_id: str = Field(..., description="Target restaurant id")
     rating: int = Field(3, ge=1, le=5, description="Optional rating placeholder")
-    content: str = Field(..., min_length=2, description="Short user feedback")
+    content: str = Field(
+        ...,
+        min_length=2,
+        max_length=MAX_REVIEW_CONTENT_LENGTH,
+        description="Short user feedback",
+    )
 
 
 class ReviewFeedbackResponse(BaseModel):
@@ -139,16 +167,30 @@ class ResetTrialDataResponse(BaseModel):
 
 class ImportedRestaurantSummary(BaseModel):
     restaurant_id: str
+    restaurant_name: str | None = None
     review_count: int
     last_imported_at: str | None = None
 
 
 class ImportedReviewRecord(BaseModel):
+    review_id: int
     restaurant_id: str
+    restaurant_name: str | None = None
     rating: int
     content: str
     days_ago: int
+    is_visible: bool
     created_at: str | None = None
+
+
+class ReviewVisibilityUpdateRequest(BaseModel):
+    is_visible: bool
+
+
+class ReviewVisibilityUpdateResponse(BaseModel):
+    review_id: int
+    restaurant_id: str
+    is_visible: bool
 
 
 class CachedRestaurantRecord(BaseModel):

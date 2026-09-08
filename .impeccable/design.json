@@ -1,0 +1,395 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-07T07:04:09Z",
+  "title": "Design System: Where To Eat",
+  "extensions": {
+    "colorMeta": {
+      "ink": {
+        "role": "neutral",
+        "displayName": "Reading Ink",
+        "tonalRamp": [
+          "oklch(15.00% 0.01123 156.40)",
+          "oklch(26.43% 0.01123 156.40)",
+          "oklch(37.86% 0.01123 156.40)",
+          "oklch(49.29% 0.01123 156.40)",
+          "oklch(60.71% 0.01123 156.40)",
+          "oklch(72.14% 0.01123 156.40)",
+          "oklch(83.57% 0.01123 156.40)",
+          "oklch(95.00% 0.01123 156.40)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "tonalRamp": [
+          "oklch(15.00% 0.01333 161.73)",
+          "oklch(26.43% 0.01333 161.73)",
+          "oklch(37.86% 0.01333 161.73)",
+          "oklch(49.29% 0.01333 161.73)",
+          "oklch(60.71% 0.01333 161.73)",
+          "oklch(72.14% 0.01333 161.73)",
+          "oklch(83.57% 0.01333 161.73)",
+          "oklch(95.00% 0.01333 161.73)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Rule Gray",
+        "tonalRamp": [
+          "oklch(15.00% 0.00585 153.77)",
+          "oklch(26.43% 0.00585 153.77)",
+          "oklch(37.86% 0.00585 153.77)",
+          "oklch(49.29% 0.00585 153.77)",
+          "oklch(60.71% 0.00585 153.77)",
+          "oklch(72.14% 0.00585 153.77)",
+          "oklch(83.57% 0.00585 153.77)",
+          "oklch(95.00% 0.00585 153.77)"
+        ]
+      },
+      "green": {
+        "role": "primary",
+        "displayName": "Leaf Green",
+        "tonalRamp": [
+          "oklch(15.00% 0.09239 162.62)",
+          "oklch(26.43% 0.09239 162.62)",
+          "oklch(37.86% 0.09239 162.62)",
+          "oklch(49.29% 0.09239 162.62)",
+          "oklch(60.71% 0.09239 162.62)",
+          "oklch(72.14% 0.09239 162.62)",
+          "oklch(83.57% 0.09239 162.62)",
+          "oklch(95.00% 0.09239 162.62)"
+        ]
+      },
+      "green-dark": {
+        "role": "primary",
+        "displayName": "Deep Leaf",
+        "tonalRamp": [
+          "oklch(15.00% 0.08145 161.34)",
+          "oklch(26.43% 0.08145 161.34)",
+          "oklch(37.86% 0.08145 161.34)",
+          "oklch(49.29% 0.08145 161.34)",
+          "oklch(60.71% 0.08145 161.34)",
+          "oklch(72.14% 0.08145 161.34)",
+          "oklch(83.57% 0.08145 161.34)",
+          "oklch(95.00% 0.08145 161.34)"
+        ]
+      },
+      "green-soft": {
+        "role": "primary",
+        "displayName": "Pale Leaf",
+        "tonalRamp": [
+          "oklch(15.00% 0.01240 157.00)",
+          "oklch(26.43% 0.01240 157.00)",
+          "oklch(37.86% 0.01240 157.00)",
+          "oklch(49.29% 0.01240 157.00)",
+          "oklch(60.71% 0.01240 157.00)",
+          "oklch(72.14% 0.01240 157.00)",
+          "oklch(83.57% 0.01240 157.00)",
+          "oklch(95.00% 0.01240 157.00)"
+        ]
+      },
+      "coral": {
+        "role": "tertiary",
+        "displayName": "Favorite Coral",
+        "tonalRamp": [
+          "oklch(15.00% 0.13306 32.04)",
+          "oklch(26.43% 0.13306 32.04)",
+          "oklch(37.86% 0.13306 32.04)",
+          "oklch(49.29% 0.13306 32.04)",
+          "oklch(60.71% 0.13306 32.04)",
+          "oklch(72.14% 0.13306 32.04)",
+          "oklch(83.57% 0.13306 32.04)",
+          "oklch(95.00% 0.13306 32.04)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 0.00)",
+          "oklch(26.43% 0.00000 0.00)",
+          "oklch(37.86% 0.00000 0.00)",
+          "oklch(49.29% 0.00000 0.00)",
+          "oklch(60.71% 0.00000 0.00)",
+          "oklch(72.14% 0.00000 0.00)",
+          "oklch(83.57% 0.00000 0.00)",
+          "oklch(95.00% 0.00000 0.00)"
+        ]
+      },
+      "navigation": {
+        "role": "neutral",
+        "displayName": "Navigation Wash",
+        "tonalRamp": [
+          "oklch(15.00% 0.00338 145.55)",
+          "oklch(26.43% 0.00338 145.55)",
+          "oklch(37.86% 0.00338 145.55)",
+          "oklch(49.29% 0.00338 145.55)",
+          "oklch(60.71% 0.00338 145.55)",
+          "oklch(72.14% 0.00338 145.55)",
+          "oklch(83.57% 0.00338 145.55)",
+          "oklch(95.00% 0.00338 145.55)"
+        ]
+      },
+      "rating": {
+        "role": "secondary",
+        "displayName": "Rating Amber",
+        "tonalRamp": [
+          "oklch(15.00% 0.11714 73.71)",
+          "oklch(26.43% 0.11714 73.71)",
+          "oklch(37.86% 0.11714 73.71)",
+          "oklch(49.29% 0.11714 73.71)",
+          "oklch(60.71% 0.11714 73.71)",
+          "oklch(72.14% 0.11714 73.71)",
+          "oklch(83.57% 0.11714 73.71)",
+          "oklch(95.00% 0.11714 73.71)"
+        ]
+      },
+      "provenance": {
+        "role": "secondary",
+        "displayName": "Provenance Violet",
+        "tonalRamp": [
+          "oklch(15.00% 0.09051 295.03)",
+          "oklch(26.43% 0.09051 295.03)",
+          "oklch(37.86% 0.09051 295.03)",
+          "oklch(49.29% 0.09051 295.03)",
+          "oklch(60.71% 0.09051 295.03)",
+          "oklch(72.14% 0.09051 295.03)",
+          "oklch(83.57% 0.09051 295.03)",
+          "oklch(95.00% 0.09051 295.03)"
+        ]
+      },
+      "provenance-soft": {
+        "role": "secondary",
+        "displayName": "Provenance Wash",
+        "tonalRamp": [
+          "oklch(15.00% 0.01522 302.55)",
+          "oklch(26.43% 0.01522 302.55)",
+          "oklch(37.86% 0.01522 302.55)",
+          "oklch(49.29% 0.01522 302.55)",
+          "oklch(60.71% 0.01522 302.55)",
+          "oklch(72.14% 0.01522 302.55)",
+          "oklch(83.57% 0.01522 302.55)",
+          "oklch(95.00% 0.01522 302.55)"
+        ]
+      },
+      "error": {
+        "role": "tertiary",
+        "displayName": "Error Red",
+        "tonalRamp": [
+          "oklch(15.00% 0.12900 30.05)",
+          "oklch(26.43% 0.12900 30.05)",
+          "oklch(37.86% 0.12900 30.05)",
+          "oklch(49.29% 0.12900 30.05)",
+          "oklch(60.71% 0.12900 30.05)",
+          "oklch(72.14% 0.12900 30.05)",
+          "oklch(83.57% 0.12900 30.05)",
+          "oklch(95.00% 0.12900 30.05)"
+        ]
+      },
+      "error-soft": {
+        "role": "tertiary",
+        "displayName": "Error Wash",
+        "tonalRamp": [
+          "oklch(15.00% 0.01611 36.53)",
+          "oklch(26.43% 0.01611 36.53)",
+          "oklch(37.86% 0.01611 36.53)",
+          "oklch(49.29% 0.01611 36.53)",
+          "oklch(60.71% 0.01611 36.53)",
+          "oklch(72.14% 0.01611 36.53)",
+          "oklch(83.57% 0.01611 36.53)",
+          "oklch(95.00% 0.01611 36.53)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Page Headline",
+        "purpose": "Compact page heading, 24px at max-width 620px; not a display role."
+      },
+      "title": {
+        "displayName": "Section Title",
+        "purpose": "Default h2; detail and editor headings have documented local overrides."
+      },
+      "section": {
+        "displayName": "Compact Section",
+        "purpose": "Experience subhead and h3."
+      },
+      "body": {
+        "displayName": "Experience Body",
+        "purpose": "Long experience text, preserved newlines and 70ch maximum."
+      },
+      "button": {
+        "displayName": "Command",
+        "purpose": "Standard command variants."
+      },
+      "field": {
+        "displayName": "Field Content",
+        "purpose": "Editable input, select, and textarea text."
+      },
+      "label": {
+        "displayName": "Field Label",
+        "purpose": "Persistent form labels."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "button-state",
+        "value": "background 150ms, border-color 150ms",
+        "purpose": "Standard command hover; default CSS easing."
+      },
+      {
+        "name": "loading-pulse",
+        "value": "pulse 1.5s ease-in-out infinite",
+        "purpose": "Loading rows; opacity is .5 at 50%."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "animation: none !important; transition: none !important",
+        "purpose": "All elements and pseudo-elements under prefers-reduced-motion: reduce."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "wide-min",
+        "value": "1600px"
+      },
+      {
+        "name": "compact-desktop-max",
+        "value": "1120px"
+      },
+      {
+        "name": "mobile-navigation-max",
+        "value": "900px"
+      },
+      {
+        "name": "narrow-layout-max",
+        "value": "620px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Existing command variant; minimum height is 40px, not a fixed height.",
+      "html": "<button type=\"button\" class=\"ds-button-primary\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 5v14M5 12h14\"/></svg>&#35760;&#19968;&#39184;</button>",
+      "css": ".ds-button-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:9px 15px;border:1px solid #d9e0db;border-radius:6px;background:white;color:var(--ink,#232925);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;font-size:13px;font-weight:600;line-height:1.5;letter-spacing:0;white-space:normal;text-align:center;cursor:pointer;transition:background 150ms,border-color 150ms;background:var(--green,#257454);border-color:var(--green,#257454);color:white}.ds-button-primary:hover{background:var(--green-dark,#185b3f);border-color:var(--green-dark,#185b3f)}.ds-button-primary:focus-visible{outline:3px solid #73af91;outline-offset:3px}.ds-button-primary:disabled{opacity:.5;cursor:not-allowed}@media(prefers-reduced-motion:reduce){button{transition:none;animation:none}}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Existing command variant; minimum height is 40px, not a fixed height.",
+      "html": "<button type=\"button\" class=\"ds-button-secondary\">&#37325;&#35797;</button>",
+      "css": ".ds-button-secondary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:9px 15px;border:1px solid #d9e0db;border-radius:6px;background:white;color:var(--ink,#232925);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;font-size:13px;font-weight:600;line-height:1.5;letter-spacing:0;white-space:normal;text-align:center;cursor:pointer;transition:background 150ms,border-color 150ms;}.ds-button-secondary:hover{background:#f3f6f4;border-color:#bdc9c0}.ds-button-secondary:focus-visible{outline:3px solid #73af91;outline-offset:3px}.ds-button-secondary:disabled{opacity:.5;cursor:not-allowed}@media(prefers-reduced-motion:reduce){button{transition:none;animation:none}}"
+    },
+    {
+      "name": "Subtle Button",
+      "kind": "button",
+      "refersTo": "button-subtle",
+      "description": "Existing command variant; minimum height is 40px, not a fixed height.",
+      "html": "<button type=\"button\" class=\"ds-button-subtle\">&#21462;&#28040;</button>",
+      "css": ".ds-button-subtle{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:9px 15px;border:1px solid #d9e0db;border-radius:6px;background:white;color:var(--ink,#232925);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;font-size:13px;font-weight:600;line-height:1.5;letter-spacing:0;white-space:normal;text-align:center;cursor:pointer;transition:background 150ms,border-color 150ms;background:transparent}.ds-button-subtle:hover{background:transparent;border-color:#bdc9c0}.ds-button-subtle:focus-visible{outline:3px solid #73af91;outline-offset:3px}.ds-button-subtle:disabled{opacity:.5;cursor:not-allowed}@media(prefers-reduced-motion:reduce){button{transition:none;animation:none}}"
+    },
+    {
+      "name": "Icon Button",
+      "kind": "button",
+      "refersTo": "button-icon",
+      "description": "Named native-title icon action; copied Lucide SVG, no runtime dependency.",
+      "html": "<button type=\"button\" class=\"ds-icon\" title=\"Copy share code\" aria-label=\"Copy share code\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect width=\"14\" height=\"14\" x=\"8\" y=\"8\" rx=\"2\" ry=\"2\"/><path d=\"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2\"/></svg></button>",
+      "css": ".ds-icon{display:inline-flex;width:34px;height:34px;align-items:center;justify-content:center;border:0;border-radius:5px;background:transparent;color:var(--muted,#68716c);flex-shrink:0;cursor:pointer}.ds-icon:hover{background:#e9efeb;color:var(--green,#257454)}.ds-icon:focus-visible{outline:3px solid #73af91;outline-offset:3px}.ds-icon:disabled{opacity:.5;cursor:not-allowed}"
+    },
+    {
+      "name": "Text Button",
+      "kind": "button",
+      "refersTo": "button-text",
+      "description": "Unframed command. The source defines no additional hover or active appearance.",
+      "html": "<button type=\"button\" class=\"ds-text\">&#36873;&#25321;&#24403;&#21069;&#32467;&#26524;</button>",
+      "css": ".ds-text{border:0;background:transparent;padding:6px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;font-size:13px;letter-spacing:0;display:inline-flex;align-items:center;gap:6px;color:var(--green,#257454);cursor:pointer}.ds-text:hover{background:transparent}.ds-text:focus-visible{outline:3px solid #73af91;outline-offset:3px}.ds-text:disabled{opacity:.5;cursor:not-allowed}"
+    },
+    {
+      "name": "Labeled Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Persistent label and fully opaque corrected placeholder; no source-specific hover change.",
+      "html": "<label class=\"ds-field-label\">&#39184;&#21381;&#21517;&#31216;<input class=\"ds-field\" placeholder=\"&#36825;&#27425;&#21507;&#30340;&#26159;&#21738;&#23478;&#65311;\" /></label>",
+      "css": ".ds-field-label{display:flex;flex-direction:column;gap:9px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;font-size:12px;font-weight:550;color:var(--ink,#232925);letter-spacing:0}.ds-field{min-width:0;width:100%;padding:10px 12px;border:1px solid #d9e1db;border-radius:6px;background:#fff;color:var(--ink,#232925);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;font-size:13px;font-weight:400;line-height:1.5;letter-spacing:0;caret-color:var(--green,#257454)}.ds-field::placeholder{color:var(--muted,#68716c);opacity:1}.ds-field:hover{background:#fff}.ds-field:focus-visible{outline:3px solid #73af91;outline-offset:3px}"
+    },
+    {
+      "name": "Desktop Navigation",
+      "kind": "nav",
+      "description": "Active sidebar link on pale navigation surface. Mobile layout is documented separately.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Preview navigation\"><a class=\"ds-nav-link\" href=\"#library\" aria-current=\"page\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 7v14m-9-3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z\"/></svg>&#20010;&#20154;&#24211;<span class=\"ds-nav-count\">5</span></a></nav>",
+      "css": ".ds-nav{background:#f5f7f5;padding:10px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;letter-spacing:0}.ds-nav-link{display:flex;align-items:center;gap:11px;min-height:44px;padding:10px 12px;border-radius:6px;color:#59645d;font-size:14px;text-decoration:none}.ds-nav-link:hover{background:#edf1ed}.ds-nav-link[aria-current=page]{background:#e2eee5;color:#236643;font-weight:650}.ds-nav-link:focus-visible{outline:3px solid #73af91;outline-offset:3px}.ds-nav-count{margin-left:auto;font-size:11px;font-variant-numeric:tabular-nums}"
+    },
+    {
+      "name": "Imported Source Label",
+      "kind": "chip",
+      "refersTo": "source-friend",
+      "description": "Non-interactive provenance badge, not a filter or decorative eyebrow. No interactive states.",
+      "html": "<span class=\"ds-source\">&#26469;&#33258; &#26519;&#26976;</span>",
+      "css": ".ds-source{display:inline;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;font-size:10px;letter-spacing:0;color:#70619b;background:#f1edf8;padding:4px 7px;border-radius:4px}"
+    },
+    {
+      "name": "Selected Record Row",
+      "kind": "custom",
+      "description": "Ruled selectable list item, not an elevated card. Content is illustrative, not a restaurant claim.",
+      "html": "<div class=\"ds-row\"><button class=\"ds-row-select\" type=\"button\" aria-pressed=\"true\"><strong class=\"ds-row-title\">&#26494;&#38388;&#23567;&#39302; &#183; &#28436;&#31034;</strong><p class=\"ds-row-excerpt\">&#28436;&#31034;&#35760;&#24405;&#65306;&#29992;&#20110;&#30028;&#38754;&#39564;&#35777;&#65292;&#19981;&#26159;&#30495;&#23454;&#39184;&#21381;&#35780;&#20215;&#12290;</p><span class=\"ds-row-bottom\"><span>&#23478;&#24120;&#33756;</span><span>&#165;86 / &#20154;</span></span></button></div>",
+      "css": ".ds-row{display:flex;border-bottom:1px solid var(--line,#e5e9e6);background:#f0f6f1}.ds-row:hover{background:var(--green-soft,#eaf3ed)}.ds-row-select{display:block;min-width:0;width:100%;background:transparent;border:0;padding:21px 21px 18px 14px;text-align:left;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;color:var(--ink,#232925);letter-spacing:0;cursor:pointer}.ds-row-select:focus-visible{outline:3px solid #73af91;outline-offset:3px}.ds-row-title{font-size:15px;overflow-wrap:anywhere}.ds-row-excerpt{margin:10px 0 0;color:#606c64;font-size:12px;line-height:1.75;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.ds-row-bottom{display:flex;gap:10px;justify-content:space-between;font-size:11px;color:var(--muted,#68716c);margin-top:13px}@media(max-width:620px){.ds-row-select{padding:17px 10px 17px 14px}}"
+    },
+    {
+      "name": "Shared Error Alert",
+      "kind": "custom",
+      "refersTo": "message-error",
+      "description": "Shared Message error variant, also used for logout failures above route content. Non-interactive.",
+      "html": "<p class=\"ds-error\" role=\"alert\">&#35831;&#27714;&#22833;&#36133;&#65292;&#35831;&#31245;&#21518;&#37325;&#35797;</p>",
+      "css": ".ds-error{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;font-size:13px;line-height:1.75;letter-spacing:0;color:#a24336;background:#fff1ed;padding:10px 13px;border-radius:5px;margin:12px 0;overflow-wrap:anywhere}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Personal Address Book",
+    "overview": "A private address book of meals: white reading surfaces, pale green navigation, compact ink typography, and deliberate green actions. The interface supports revisiting personal records rather than browsing a public ratings feed. Chinese copy is direct and restrained; the Where To Eat name and existing illustrated brand mark remain visible.\n\nThe built world uses ruled lists, adjacent detail reading, and quiet forms. Amber communicates personal ratings, violet identifies imported provenance, and coral marks favorites. Decoration does not replace restaurant names, experience text, or source attribution.",
+    "keyCharacteristics": [
+      "White reading surfaces and pale green navigation.",
+      "Ruled records instead of floating content cards.",
+      "Compact Chinese-first hierarchy with visible provenance.",
+      "Explicit actions, readable feedback, and responsive task continuity."
+    ],
+    "rules": [
+      {
+        "name": "The Semantic Accent Rule",
+        "body": "Keep green for actions and selection, amber for ratings, violet for provenance, and coral for row favorites; retain text or accessible names alongside meaning-bearing color.",
+        "section": "colors"
+      },
+      {
+        "name": "The Reading Hierarchy Rule",
+        "body": "Keep restaurant names and experience text above metadata in emphasis, with zero letter spacing and wrapping for long content.",
+        "section": "typography"
+      },
+      {
+        "name": "The Record Continuity Rule",
+        "body": "Preserve access to the full record across viewport changes; mobile uses a dedicated detail route instead of squeezing the desktop split view.",
+        "section": "layout"
+      },
+      {
+        "name": "The Ruled Surface Rule",
+        "body": "Separate records and sections with rules or tonal state changes, not lifted content cards.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep private experience text and its source visually distinct from place data.",
+      "Do reuse ruled rows, restrained controls, and the existing responsive navigation.",
+      "Do keep placeholders at the muted token with full opacity and errors visible in the shared main-content alert.",
+      "Do preserve reduced-motion behavior, keyboard focus, and accessible icon names."
+    ],
+    "donts": [
+      "Don't turn the record library into a public popularity feed or promote imported text as the user's own experience.",
+      "Don't replace flat reading sections with nested floating cards or oversized display headings.",
+      "Don't present fallback restaurant states or supplied screenshots as verified live AMap service results.",
+      "Don't treat synthesized sidecar ramps or one-off local values as new production token scales."
+    ]
+  }
+}

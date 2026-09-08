@@ -6,3 +6,10 @@ __pycache__/
 .env
 .DS_Store
 /data/
+node_modules/
+frontend/dist/
+frontend/test-results/
+frontend/playwright-report/
+.impeccable/review/
+resume_output/
+python_check.py

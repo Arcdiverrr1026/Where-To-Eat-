@@ -1,3 +1,5 @@
+from threading import Thread
+
 from app.core.config import settings
 from app.core.scoring import ScoringEngine
 from app.core.comment_summary import CommentSummarizer
@@ -15,6 +17,7 @@ from app.schemas.restaurant import (
     RestaurantReviewItem,
     ReviewFeedbackRequest,
     ReviewFeedbackResponse,
+    ReviewVisibilityUpdateResponse,
     RestaurantRecommendationRequest,
     RestaurantRecommendationResponse,
     ResetTrialDataResponse,
@@ -26,6 +29,9 @@ from app.services.review_source_service import ReviewSourceService
 
 
 class RecommendationService:
+    DEFAULT_LAT = 31.2304
+    DEFAULT_LNG = 121.4737
+
     def __init__(self) -> None:
         self.scoring = ScoringEngine()
         self.comment_summarizer = CommentSummarizer()
@@ -37,6 +43,15 @@ class RecommendationService:
     def close(self) -> None:
         self.source_service.close()
         self.store.close()
+
+    def start_background_prewarm(self) -> None:
+        if not settings.recommendation_prewarm_enabled:
+            return
+        Thread(
+            target=self.source_service.prewarm_candidate_cache,
+            name="recommendation-cache-prewarm",
+            daemon=True,
+        ).start()
 
     def recommend(
         self, payload: RestaurantRecommendationRequest
@@ -116,6 +131,7 @@ class RecommendationService:
             "filtered_by_scene": 0,
             "final_count": 0,
         }
+        restaurants_to_cache: list[dict] = []
 
         for restaurant in restaurants:
             restaurant, tags, risk_flags = self._prepare_restaurant_for_output(
@@ -125,6 +141,8 @@ class RecommendationService:
                 restaurant["avg_price"],
                 payload.budget,
                 price_known=restaurant.get("avg_price_known", True),
+                budget_min=payload.budget_min,
+                budget_max=payload.budget_max,
             ):
                 debug["filtered_by_budget"] += 1
                 continue
@@ -137,7 +155,7 @@ class RecommendationService:
             if not self._matches_scene(restaurant, payload.scene):
                 debug["filtered_by_scene"] += 1
                 continue
-            self.restaurant_cache[restaurant["id"]] = restaurant
+            restaurants_to_cache.append(restaurant)
             lng_value = restaurant.get("lng")
             lat_value = restaurant.get("lat")
             candidates.append(
@@ -163,16 +181,41 @@ class RecommendationService:
                 )
             )
         debug["final_count"] = len(candidates)
+        self._cache_restaurants(restaurants_to_cache)
         if collect_debug:
             return candidates, debug
         return candidates
 
-    def get_restaurant_detail(self, restaurant_id: str) -> RestaurantDetailResponse | None:
-        restaurant = self._resolve_restaurant(restaurant_id)
+    def get_restaurant_detail(
+        self,
+        restaurant_id: str,
+        *,
+        lat: float | None = None,
+        lng: float | None = None,
+        category: str | None = None,
+    ) -> RestaurantDetailResponse | None:
+        restaurant = self._resolve_restaurant(restaurant_id, category=category)
+        if restaurant is None and lat is not None and lng is not None and category:
+            restaurant = self._resolve_restaurant_from_search_context(
+                restaurant_id,
+                lat=lat,
+                lng=lng,
+                category=category,
+            )
         if restaurant is None:
             return None
         restaurant, tags, risk_flags = self._prepare_restaurant_for_output(restaurant)
-        reviews = self.review_source_service.fetch_public_reviews(restaurant["id"])
+        reviews = self.review_source_service.fetch_public_reviews(restaurant)
+        detail_lng = self._coordinate_value(
+            restaurant,
+            key="lng",
+            fallback=lng if lng is not None else self.DEFAULT_LNG,
+        )
+        detail_lat = self._coordinate_value(
+            restaurant,
+            key="lat",
+            fallback=lat if lat is not None else self.DEFAULT_LAT,
+        )
 
         return RestaurantDetailResponse(
             restaurant_id=restaurant["id"],
@@ -181,6 +224,8 @@ class RecommendationService:
             review_count=restaurant.get("review_count", 0),
             name=restaurant["name"],
             category=restaurant["category"],
+            lng=detail_lng,
+            lat=detail_lat,
             address=restaurant["address"],
             distance_meters=restaurant["distance_meters"],
             distance_text=self._format_distance(restaurant["distance_meters"]),
@@ -205,17 +250,19 @@ class RecommendationService:
         if restaurant is None:
             return None
 
+        canonical_id = restaurant["id"]
+        self._cache_restaurant(restaurant)
         reviews = self.review_source_service.import_reviews(
-            restaurant_id=payload.restaurant_id,
+            restaurant_id=canonical_id,
             review_format=payload.format,
             mode=payload.mode,
             content=payload.content,
         )
-        enriched, _, _ = self._prepare_restaurant_for_output(restaurant)
-        self.restaurant_cache[payload.restaurant_id] = enriched
+        self._clear_restaurant_cache(payload.restaurant_id)
+        self._clear_restaurant_cache(canonical_id)
         sample_review = reviews[0]["content"] if reviews else None
         return ReviewImportResponse(
-            restaurant_id=payload.restaurant_id,
+            restaurant_id=canonical_id,
             imported_count=len(reviews),
             review_source="imported",
             import_mode=payload.mode,
@@ -229,15 +276,18 @@ class RecommendationService:
         if restaurant is None:
             return None
 
+        canonical_id = restaurant["id"]
+        self._cache_restaurant(restaurant)
         review = self.review_source_service.submit_feedback(
-            restaurant_id=payload.restaurant_id,
+            restaurant_id=canonical_id,
             rating=payload.rating,
             content=payload.content,
         )
         enriched, _, _ = self._prepare_restaurant_for_output(restaurant)
-        self.restaurant_cache[payload.restaurant_id] = enriched
+        self._clear_restaurant_cache(payload.restaurant_id)
+        self._clear_restaurant_cache(canonical_id)
         return ReviewFeedbackResponse(
-            restaurant_id=payload.restaurant_id,
+            restaurant_id=canonical_id,
             review_source="imported",
             review_count=enriched.get("review_count", 0),
             sample_review=review["content"],
@@ -259,9 +309,20 @@ class RecommendationService:
             ],
         )
 
+    def set_review_visibility(
+        self, review_id: int, is_visible: bool
+    ) -> ReviewVisibilityUpdateResponse | None:
+        result = self.review_source_service.set_review_visibility(review_id, is_visible)
+        if result is None:
+            return None
+        self._clear_restaurant_cache(result["restaurant_id"])
+        return ReviewVisibilityUpdateResponse(**result)
+
     def reset_trial_data(self) -> ResetTrialDataResponse:
         cleared_reviews = self.store.clear_imported_reviews()
         cleared_restaurants = self.store.clear_cached_restaurants()
+        self.store.clear_candidate_cache()
+        self.source_service._candidate_cache.clear()
         self.restaurant_cache.clear()
         return ResetTrialDataResponse(
             cleared_reviews=cleared_reviews,
@@ -269,22 +330,104 @@ class RecommendationService:
             message="试运行阶段的历史评价和餐厅缓存已清空。",
         )
 
+    def _cache_restaurant(self, restaurant: dict) -> None:
+        self._cache_restaurants([restaurant])
+
+    def _cache_restaurants(self, restaurants: list[dict]) -> None:
+        unique_restaurants: dict[str, dict] = {}
+        for restaurant in restaurants:
+            restaurant_id = str(restaurant["id"]).strip()
+            if not restaurant_id:
+                continue
+            unique_restaurants[restaurant_id] = restaurant
+            self.restaurant_cache[restaurant_id] = restaurant
+            external_id = restaurant.get("external_id")
+            if external_id:
+                self.restaurant_cache[str(external_id).strip()] = restaurant
+        if unique_restaurants:
+            self.store.upsert_restaurants(list(unique_restaurants.values()))
+
+    def _clear_restaurant_cache(self, restaurant_id: str) -> None:
+        for lookup_id in self._restaurant_id_variants(restaurant_id):
+            self.restaurant_cache.pop(lookup_id, None)
+
     def _find_mock_restaurant(self, restaurant_id: str) -> dict | None:
         return next((item for item in MOCK_RESTAURANTS if item["id"] == restaurant_id), None)
 
-    def _resolve_restaurant(self, restaurant_id: str) -> dict | None:
-        restaurant = self.restaurant_cache.get(restaurant_id)
+    def _resolve_restaurant(
+        self,
+        restaurant_id: str,
+        *,
+        category: str | None = None,
+    ) -> dict | None:
+        normalized_id = restaurant_id.strip()
+        for lookup_id in self._restaurant_id_variants(normalized_id):
+            restaurant = self.restaurant_cache.get(lookup_id)
+            if restaurant is not None:
+                return restaurant
+        for lookup_id in self._restaurant_id_variants(normalized_id):
+            restaurant = self.source_service.get_cached_restaurant(lookup_id)
+            if restaurant is not None:
+                return restaurant
+        for lookup_id in self._restaurant_id_variants(normalized_id):
+            mock_restaurant = self._find_mock_restaurant(lookup_id)
+            if mock_restaurant is not None:
+                # Direct demo links such as /restaurant-view?id=r001 should remain
+                # usable even when mock fallback is disabled for recommendation lists.
+                return {**mock_restaurant, "source": "mock"}
+        restaurant = self.source_service.fetch_amap_restaurant_by_id(
+            normalized_id,
+            category=category,
+        )
         if restaurant is not None:
+            self._cache_restaurant(restaurant)
             return restaurant
-        restaurant = self.source_service.get_cached_restaurant(restaurant_id)
-        if restaurant is not None:
-            return restaurant
-        mock_restaurant = self._find_mock_restaurant(restaurant_id)
-        if mock_restaurant is not None:
-            # Direct demo links such as /restaurant-view?id=r001 should remain
-            # usable even when mock fallback is disabled for recommendation lists.
-            return {**mock_restaurant, "source": "mock"}
         return None
+
+    def _resolve_restaurant_from_search_context(
+        self,
+        restaurant_id: str,
+        *,
+        lat: float,
+        lng: float,
+        category: str,
+    ) -> dict | None:
+        lookup_ids = set(self._restaurant_id_variants(restaurant_id))
+        restaurants, _ = self.source_service.fetch_candidates(
+            lat=lat,
+            lng=lng,
+            category=category,
+        )
+        for restaurant in restaurants:
+            self._cache_restaurant(restaurant)
+            if (
+                restaurant["id"] in lookup_ids
+                or restaurant.get("external_id") in lookup_ids
+            ):
+                return restaurant
+        return self._resolve_restaurant(restaurant_id)
+
+    def _restaurant_id_variants(self, restaurant_id: str) -> list[str]:
+        normalized_id = restaurant_id.strip()
+        if not normalized_id:
+            return []
+        variants = [normalized_id]
+        if normalized_id.startswith("amap_"):
+            variants.append(normalized_id.removeprefix("amap_"))
+        else:
+            variants.append(f"amap_{normalized_id}")
+
+        deduped: list[str] = []
+        for value in variants:
+            if value and value not in deduped:
+                deduped.append(value)
+        return deduped
+
+    def _coordinate_value(self, restaurant: dict, *, key: str, fallback: float) -> float:
+        value = restaurant.get(key)
+        if value is None:
+            return float(fallback)
+        return float(value)
 
     def _enrich_with_reviews(self, restaurant: dict) -> dict:
         enriched = restaurant.copy()
@@ -324,6 +467,8 @@ class RecommendationService:
         return enriched, tags, risk_flags
 
     def _format_distance(self, meters: int) -> str:
+        if meters <= 0:
+            return "待确认"
         if meters >= 1000:
             return f"{meters / 1000:.1f}km"
         return f"{meters}m"
@@ -336,9 +481,12 @@ class RecommendationService:
             parts.append(f"步行约{walking_minutes}分钟")
         if riding_minutes is not None:
             parts.append(f"骑行约{riding_minutes}分钟")
-        distance_text = self._format_distance(int(restaurant["distance_meters"]))
+        distance_meters = int(restaurant["distance_meters"])
+        distance_text = self._format_distance(distance_meters)
         if parts:
             return " · ".join(parts + [f"距离约{distance_text}"])
+        if distance_meters <= 0:
+            return "距离待确认"
         return f"距离约{distance_text}"
 
     def _format_price(self, restaurant: dict) -> str:

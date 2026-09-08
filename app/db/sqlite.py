@@ -1,12 +1,14 @@
+import json
 import sqlite3
+from time import time
 from pathlib import Path
 
 from app.core.config import settings
 
 
 class SQLiteStore:
-    def __init__(self) -> None:
-        self.db_path = Path(settings.sqlite_path)
+    def __init__(self, db_path: str | Path | None = None) -> None:
+        self.db_path = Path(db_path if db_path is not None else settings.sqlite_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._conn: sqlite3.Connection | None = None
         self._initialize()
@@ -59,7 +61,24 @@ class SQLiteStore:
                     rating INTEGER NOT NULL,
                     content TEXT NOT NULL,
                     days_ago INTEGER NOT NULL,
+                    is_visible INTEGER DEFAULT 1,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+                """
+            )
+            self._ensure_review_columns(connection)
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS recommendation_candidate_cache (
+                    cache_key TEXT PRIMARY KEY,
+                    lat REAL NOT NULL,
+                    lng REAL NOT NULL,
+                    category TEXT NOT NULL,
+                    source TEXT NOT NULL,
+                    candidates_json TEXT NOT NULL,
+                    debug_json TEXT NOT NULL,
+                    expires_at REAL NOT NULL,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
                 """
             )
@@ -73,6 +92,24 @@ class SQLiteStore:
                 """
                 CREATE INDEX IF NOT EXISTS idx_restaurants_category
                 ON restaurants (category)
+                """
+            )
+            connection.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_restaurants_external_id
+                ON restaurants (external_id)
+                """
+            )
+            connection.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_imported_reviews_visibility
+                ON imported_reviews (restaurant_id, is_visible)
+                """
+            )
+            connection.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_candidate_cache_expires_at
+                ON recommendation_candidate_cache (expires_at)
                 """
             )
 
@@ -92,6 +129,14 @@ class SQLiteStore:
         for column, statement in migrations.items():
             if column not in existing_columns:
                 connection.execute(statement)
+
+    def _ensure_review_columns(self, connection: sqlite3.Connection) -> None:
+        rows = connection.execute("PRAGMA table_info(imported_reviews)").fetchall()
+        existing_columns = {row["name"] for row in rows}
+        if "is_visible" not in existing_columns:
+            connection.execute(
+                "ALTER TABLE imported_reviews ADD COLUMN is_visible INTEGER DEFAULT 1"
+            )
 
     def upsert_restaurants(self, restaurants: list[dict]) -> None:
         if not restaurants:
@@ -154,9 +199,11 @@ class SQLiteStore:
                        distance_meters, lng, lat, walking_minutes, riding_minutes,
                        updated_at
                 FROM restaurants
-                WHERE id = ?
+                WHERE id = ? OR external_id = ?
+                ORDER BY CASE WHEN id = ? THEN 0 ELSE 1 END
+                LIMIT 1
                 """,
-                (restaurant_id,),
+                (restaurant_id, restaurant_id, restaurant_id),
             ).fetchone()
         if row is None:
             return None
@@ -215,6 +262,83 @@ class SQLiteStore:
             cursor = connection.execute("DELETE FROM restaurants")
         return cursor.rowcount
 
+    def clear_candidate_cache(self) -> int:
+        with self._connect() as connection:
+            cursor = connection.execute("DELETE FROM recommendation_candidate_cache")
+        return cursor.rowcount
+
+    def fetch_candidate_cache(self, cache_key: str) -> dict | None:
+        now = time()
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT source, candidates_json, debug_json, expires_at
+                FROM recommendation_candidate_cache
+                WHERE cache_key = ? AND expires_at > ?
+                """,
+                (cache_key, now),
+            ).fetchone()
+        if row is None:
+            return None
+        try:
+            candidates = json.loads(row["candidates_json"])
+            debug = json.loads(row["debug_json"])
+        except json.JSONDecodeError:
+            return None
+        if not isinstance(candidates, list) or not isinstance(debug, dict):
+            return None
+        return {
+            "source": row["source"],
+            "candidates": candidates,
+            "debug": debug,
+            "expires_at": float(row["expires_at"]),
+        }
+
+    def upsert_candidate_cache(
+        self,
+        *,
+        cache_key: str,
+        lat: float,
+        lng: float,
+        category: str,
+        source: str,
+        candidates: list[dict],
+        debug: dict,
+        ttl_seconds: int,
+    ) -> None:
+        if ttl_seconds <= 0:
+            return
+        expires_at = time() + ttl_seconds
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO recommendation_candidate_cache (
+                    cache_key, lat, lng, category, source, candidates_json,
+                    debug_json, expires_at, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(cache_key) DO UPDATE SET
+                    lat = excluded.lat,
+                    lng = excluded.lng,
+                    category = excluded.category,
+                    source = excluded.source,
+                    candidates_json = excluded.candidates_json,
+                    debug_json = excluded.debug_json,
+                    expires_at = excluded.expires_at,
+                    updated_at = CURRENT_TIMESTAMP
+                """,
+                (
+                    cache_key,
+                    lat,
+                    lng,
+                    category,
+                    source,
+                    json.dumps(candidates, ensure_ascii=False),
+                    json.dumps(debug, ensure_ascii=False),
+                    expires_at,
+                ),
+            )
+
     def replace_reviews(self, restaurant_id: str, reviews: list[dict]) -> None:
         with self._connect() as connection:
             connection.execute(
@@ -223,8 +347,10 @@ class SQLiteStore:
             )
             connection.executemany(
                 """
-                INSERT INTO imported_reviews (restaurant_id, rating, content, days_ago)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO imported_reviews (
+                    restaurant_id, rating, content, days_ago, is_visible
+                )
+                VALUES (?, ?, ?, ?, 1)
                 """,
                 [
                     (
@@ -242,7 +368,7 @@ class SQLiteStore:
             return 0
         existing = {
             (item["rating"], item["content"], item["days_ago"])
-            for item in self.fetch_reviews(restaurant_id)
+            for item in self.fetch_reviews(restaurant_id, include_hidden=True)
         }
         new_reviews = [
             review
@@ -254,8 +380,10 @@ class SQLiteStore:
         with self._connect() as connection:
             connection.executemany(
                 """
-                INSERT INTO imported_reviews (restaurant_id, rating, content, days_ago)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO imported_reviews (
+                    restaurant_id, rating, content, days_ago, is_visible
+                )
+                VALUES (?, ?, ?, ?, 1)
                 """,
                 [
                     (
@@ -273,8 +401,10 @@ class SQLiteStore:
         with self._connect() as connection:
             connection.execute(
                 """
-                INSERT INTO imported_reviews (restaurant_id, rating, content, days_ago)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO imported_reviews (
+                    restaurant_id, rating, content, days_ago, is_visible
+                )
+                VALUES (?, ?, ?, ?, 1)
                 """,
                 (
                     restaurant_id,
@@ -284,22 +414,26 @@ class SQLiteStore:
                 ),
             )
 
-    def fetch_reviews(self, restaurant_id: str) -> list[dict]:
+    def fetch_reviews(self, restaurant_id: str, include_hidden: bool = False) -> list[dict]:
         with self._connect() as connection:
+            visibility_clause = "" if include_hidden else "AND is_visible = 1"
             rows = connection.execute(
-                """
-                SELECT rating, content, days_ago, created_at
+                f"""
+                SELECT id, rating, content, days_ago, is_visible, created_at
                 FROM imported_reviews
                 WHERE restaurant_id = ?
+                {visibility_clause}
                 ORDER BY id DESC
                 """,
                 (restaurant_id,),
             ).fetchall()
         return [
             {
+                "review_id": int(row["id"]),
                 "rating": int(row["rating"]),
                 "content": row["content"],
                 "days_ago": int(row["days_ago"]),
+                "is_visible": bool(row["is_visible"]),
                 "created_at": row["created_at"],
             }
             for row in rows
@@ -311,9 +445,23 @@ class SQLiteStore:
                 """
                 SELECT
                     restaurant_id,
+                    COALESCE(
+                        (
+                            SELECT restaurants.name
+                            FROM restaurants
+                            WHERE restaurants.id = reviews.restaurant_id
+                            LIMIT 1
+                        ),
+                        (
+                            SELECT restaurants.name
+                            FROM restaurants
+                            WHERE restaurants.external_id = reviews.restaurant_id
+                            LIMIT 1
+                        )
+                    ) AS restaurant_name,
                     COUNT(*) AS review_count,
                     MAX(created_at) AS last_imported_at
-                FROM imported_reviews
+                FROM imported_reviews AS reviews
                 GROUP BY restaurant_id
                 ORDER BY last_imported_at DESC, restaurant_id ASC
                 """
@@ -321,6 +469,7 @@ class SQLiteStore:
         return [
             {
                 "restaurant_id": row["restaurant_id"],
+                "restaurant_name": row["restaurant_name"],
                 "review_count": int(row["review_count"]),
                 "last_imported_at": row["last_imported_at"],
             }
@@ -331,8 +480,29 @@ class SQLiteStore:
         with self._connect() as connection:
             rows = connection.execute(
                 """
-                SELECT restaurant_id, rating, content, days_ago, created_at
-                FROM imported_reviews
+                SELECT
+                    id,
+                    restaurant_id,
+                    COALESCE(
+                        (
+                            SELECT restaurants.name
+                            FROM restaurants
+                            WHERE restaurants.id = reviews.restaurant_id
+                            LIMIT 1
+                        ),
+                        (
+                            SELECT restaurants.name
+                            FROM restaurants
+                            WHERE restaurants.external_id = reviews.restaurant_id
+                            LIMIT 1
+                        )
+                    ) AS restaurant_name,
+                    rating,
+                    content,
+                    days_ago,
+                    is_visible,
+                    created_at
+                FROM imported_reviews AS reviews
                 ORDER BY id DESC
                 LIMIT ?
                 """,
@@ -340,11 +510,42 @@ class SQLiteStore:
             ).fetchall()
         return [
             {
+                "review_id": int(row["id"]),
                 "restaurant_id": row["restaurant_id"],
+                "restaurant_name": row["restaurant_name"],
                 "rating": int(row["rating"]),
                 "content": row["content"],
                 "days_ago": int(row["days_ago"]),
+                "is_visible": bool(row["is_visible"]),
                 "created_at": row["created_at"],
             }
             for row in rows
         ]
+
+    def set_review_visibility(self, review_id: int, is_visible: bool) -> dict | None:
+        with self._connect() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE imported_reviews
+                SET is_visible = ?
+                WHERE id = ?
+                """,
+                (1 if is_visible else 0, review_id),
+            )
+            if cursor.rowcount == 0:
+                return None
+            row = connection.execute(
+                """
+                SELECT id, restaurant_id, is_visible
+                FROM imported_reviews
+                WHERE id = ?
+                """,
+                (review_id,),
+            ).fetchone()
+        if row is None:
+            return None
+        return {
+            "review_id": int(row["id"]),
+            "restaurant_id": row["restaurant_id"],
+            "is_visible": bool(row["is_visible"]),
+        }

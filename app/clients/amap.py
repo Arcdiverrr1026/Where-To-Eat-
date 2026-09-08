@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from json import JSONDecodeError
 import re
+from threading import Lock
 
 import httpx
 
@@ -26,6 +27,7 @@ class AmapRestaurantCandidate:
 
 class AmapClient:
     base_url = "https://restapi.amap.com/v5/place/around"
+    detail_url = "https://restapi.amap.com/v5/place/detail"
     walking_route_url = "https://restapi.amap.com/v3/direction/walking"
     riding_route_url = "https://restapi.amap.com/v4/direction/bicycling"
     estimated_walking_speed_meters_per_minute = 75
@@ -34,6 +36,7 @@ class AmapClient:
     def __init__(self) -> None:
         self.api_key = settings.amap_api_key
         self._client: httpx.Client | None = None
+        self._client_lock = Lock()
 
     def is_configured(self) -> bool:
         return bool(self.api_key)
@@ -70,17 +73,17 @@ class AmapClient:
         for poi in pois:
             if not isinstance(poi, dict):
                 continue
-            source_id = poi.get("id", "")
+            source_id = self._extract_text(poi.get("id"), "")
             if not source_id or source_id in seen_ids:
                 continue
             seen_ids.add(source_id)
             avg_price, avg_price_known = self._extract_price(poi)
             candidate = AmapRestaurantCandidate(
                 source_id=source_id,
-                name=poi.get("name", "未知店铺"),
+                name=self._extract_text(poi.get("name"), "未知店铺"),
                 category=keyword,
-                address=poi.get("address", "地址待补充"),
-                raw_type=str(poi.get("type", "") or ""),
+                address=self._extract_text(poi.get("address"), "地址待补充"),
+                raw_type=self._extract_text(poi.get("type"), ""),
                 avg_price=avg_price,
                 avg_price_known=avg_price_known,
                 business_hours=self._extract_business_hours(poi),
@@ -121,6 +124,60 @@ class AmapClient:
         candidates.sort(key=lambda item: item.distance_meters)
         return candidates
 
+    def fetch_restaurant_detail(
+        self,
+        source_id: str,
+    ) -> AmapRestaurantCandidate | None:
+        normalized_id = source_id.strip().removeprefix("amap_")
+        if not self.is_configured() or not normalized_id:
+            return None
+
+        client = self._get_client()
+        try:
+            response = client.get(
+                self.detail_url,
+                params={
+                    "key": self.api_key,
+                    "id": normalized_id,
+                    "show_fields": "business",
+                },
+            )
+            response.raise_for_status()
+            payload = response.json()
+        except (httpx.HTTPError, JSONDecodeError, ValueError):
+            return None
+
+        if not self._is_success_payload(payload):
+            return None
+        poi = self._extract_first_poi(payload)
+        if poi is None:
+            return None
+
+        avg_price, avg_price_known = self._extract_price(poi)
+        raw_type = self._extract_text(poi.get("type"), "")
+        candidate = AmapRestaurantCandidate(
+            source_id=self._extract_text(poi.get("id"), normalized_id),
+            name=self._extract_text(poi.get("name"), "未知店铺"),
+            category=raw_type or "餐饮",
+            address=self._extract_text(poi.get("address"), "地址待补充"),
+            raw_type=raw_type,
+            avg_price=avg_price,
+            avg_price_known=avg_price_known,
+            business_hours=self._extract_business_hours(poi),
+            distance_meters=self._extract_distance(poi),
+            lng=self._extract_lng(poi),
+            lat=self._extract_lat(poi),
+        )
+        candidate.walking_minutes = self._estimate_minutes_from_distance(
+            candidate.distance_meters,
+            speed_meters_per_minute=self.estimated_walking_speed_meters_per_minute,
+        )
+        candidate.riding_minutes = self._estimate_minutes_from_distance(
+            candidate.distance_meters,
+            speed_meters_per_minute=self.estimated_riding_speed_meters_per_minute,
+        )
+        return candidate
+
     def _fetch_pois(
         self,
         *,
@@ -155,13 +212,43 @@ class AmapClient:
 
             if not isinstance(payload, dict):
                 break
-            page_pois = payload.get("pois", [])
-            if not isinstance(page_pois, list) or not page_pois:
+            if not self._is_success_payload(payload):
+                break
+            page_pois = self._extract_pois(payload)
+            if not page_pois:
                 break
             pois.extend(page_pois)
             if len(page_pois) < page_size:
                 break
         return pois
+
+    def _is_success_payload(self, payload: dict) -> bool:
+        status = payload.get("status")
+        return status in (None, 1, "1", True)
+
+    def _extract_first_poi(self, payload: dict) -> dict | None:
+        pois = self._extract_pois(payload)
+        if not pois:
+            return None
+        return pois[0]
+
+    def _extract_pois(self, payload: dict) -> list[dict]:
+        pois_payload = payload.get("pois", [])
+        if isinstance(pois_payload, dict):
+            pois_payload = pois_payload.get("poi", [])
+        if isinstance(pois_payload, dict):
+            return [pois_payload]
+        if isinstance(pois_payload, list):
+            return [poi for poi in pois_payload if isinstance(poi, dict)]
+        return []
+
+    def _extract_text(self, value: object, default: str) -> str:
+        if isinstance(value, str):
+            normalized = value.strip()
+            return normalized or default
+        if isinstance(value, (int, float)):
+            return str(value)
+        return default
 
     def _extract_price(self, poi: dict) -> tuple[int, bool]:
         business = poi.get("business", {})
@@ -252,7 +339,9 @@ class AmapClient:
 
     def _get_client(self) -> httpx.Client:
         if self._client is None:
-            self._client = httpx.Client(timeout=settings.amap_http_timeout_seconds)
+            with self._client_lock:
+                if self._client is None:
+                    self._client = httpx.Client(timeout=settings.amap_http_timeout_seconds)
         return self._client
 
     def _estimate_minutes_from_distance(

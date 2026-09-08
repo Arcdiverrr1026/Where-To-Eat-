@@ -16,10 +16,21 @@ class ScoringEngine:
         "3公里内": 3600,
     }
 
-    def within_budget(self, price: int, budget: str, *, price_known: bool = True) -> bool:
+    def within_budget(
+        self,
+        price: int,
+        budget: str,
+        *,
+        price_known: bool = True,
+        budget_min: int | None = None,
+        budget_max: int | None = None,
+    ) -> bool:
         if not price_known:
             return True
-        lower, upper = self.budget_ranges[budget]
+        if budget_min is not None or budget_max is not None:
+            lower, upper = budget_min, budget_max
+        else:
+            lower, upper = self.budget_ranges[budget]
         if lower is not None and price < lower:
             return False
         if upper is not None and price > upper:

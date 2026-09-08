@@ -1,209 +1,95 @@
 # Where To Eat
 
-一个面向大学生的校园餐厅真实评论平台原型。
+公共美食地图 + 个人餐厅体验库：先浏览大家自愿公开的真实体验，登录后再记录自己的足迹，并可切换我的、朋友的和融合地图。
 
-当前项目已经包含：
+## 功能
 
-- 首页筛选、推荐榜单、地图视图、店铺详情
-- 评论导入页与后台管理页
-- 店铺详情页支持用户直接提交真实评论并即时刷新页面概况
-- 支持本地 JSON / CSV 文件导入评论
-- 餐厅基础信息缓存
-- 评论导入持久化
-- 高德周边搜索接入骨架
-- 无高德 Key 时的 mock 回退链路
+- 首次进入公共美食地图，无需登录即可浏览地点和公开体验；登录后在同一部署的不同设备访问自己的足迹。
+- 记录餐厅、日期、评分、体验、人均实付、标签和是否再来；编辑、删除、收藏记录。
+- 按自己的体验、朋友的体验、特别喜欢筛选，支持搜索与排序。
+- 高德附近搜索和地图，地点可带入表单。地图资料不等于用餐评价，失败时不展示虚构餐厅。
+- 分享选定的自有记录，支持 1 / 7 / 30 天有效期与撤销。
+- 朋友登录后先预览再导入；副本保留作者与原文，不能冒充自己的体验编辑或重新分享。
+- 记录默认私密；记录表单可主动公开到公共地图，取消公开即可撤回。
 
-## Tech Stack
+## 本地运行
 
-- Backend: FastAPI
-- Frontend: FastAPI 静态页面
-- Storage: SQLite
-- Config: python-dotenv
-
-## Product Positioning
-
-这个项目的核心不是“附近有什么吃的”，而是“学校附近这家店，最近大家到底怎么说”。
-
-系统目前支持两类评论来源：
-
-- 用户在店铺详情页直接提交真实评论
-- 管理端或运营侧通过 JSON / CSV 批量补录历史评论
-
-提交后会立即进入 SQLite，并更新这家店的评论概况，逐步形成校园内自己的餐厅评论池。
-
-## Project Structure
-
-```text
-app/
-  api/                HTTP 路由
-  clients/            外部服务客户端
-  core/               配置、评论摘要
-  data/               mock 餐厅与评论
-  db/                 SQLite 存储层
-  services/           推荐、评论、餐厅数据服务
-frontend/
-  *.html              页面
-  assets/             JS 与 CSS
-scripts/
-  bootstrap_demo.py   初始化数据库并预热演示数据
-  fetch_reviews_experimental.py  实验性抓取页面评论并转成导入格式
-data/
-  where_to_eat.db     SQLite 数据库文件
-```
-
-## Environment
-
-可选 `.env` 配置：
+需要 Python 3.14、uv、Node.js 20.19+ 或 22.12+。在项目根目录执行：
 
 ```bash
-AMAP_API_KEY=your_key_here
-AMAP_JS_API_KEY=your_js_key_here
-AMAP_SECURITY_JS_CODE=your_security_js_code
-AMAP_RADIUS_METERS=3000
-AMAP_PAGE_SIZE=20
-SQLITE_PATH=/absolute/path/to/where_to_eat.db
-USE_MOCK_FALLBACK=true
-USE_MOCK_REVIEW_FALLBACK=false
-ADMIN_TOKEN=change_this_for_local_admin
-```
-
-如果没有配置 `AMAP_API_KEY`，系统会自动回退到本地 mock 数据。
-
-如果希望 `/map-view` 显示真实高德底图，还需要额外配置：
-
-- `AMAP_JS_API_KEY`：高德 Web 端 JS API Key
-- `AMAP_SECURITY_JS_CODE`：高德 JS API 安全密钥
-
-默认情况下，系统不会再使用预置 mock 评论参与页面展示判断。
-
-- `USE_MOCK_REVIEW_FALLBACK=false`：仅使用用户提交 / 导入的真实评论
-- `USE_MOCK_REVIEW_FALLBACK=true`：开发演示时允许回退到 mock 评论
-- `ADMIN_TOKEN`：访问后台管理 API 和清空试运行数据时需要在后台页输入的管理令牌
-
-## Setup
-
-项目当前使用 `uv` 管理依赖与虚拟环境。首次进入项目后执行：
-
-```bash
-cd "/Users/lucent/PycharmProjects/Where-To-Eat-"
 uv sync
+npm --prefix frontend ci
+npm --prefix frontend run build
+uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
-这会根据 `pyproject.toml` 和仓库内提交的 `uv.lock` 创建或更新 `.venv` 并安装依赖。
-如果依赖声明有调整，重新执行一次 `uv sync` 即可。
+访问 http://127.0.0.1:8000 ，首次注册后个人库为空，不会自动加入演示记录。
+前端开发另开终端运行 `npm --prefix frontend run dev`，Vite 将 API 请求代理到本机 8000 端口的后端。
 
-## Bootstrap Demo Data
+## 配置
 
-首次启动前，建议先执行一次：
+根目录 `.env` 自动加载，已有密钥无需复制到前端源码：
+
+```dotenv
+AMAP_API_KEY=your_web_service_key
+AMAP_JS_API_KEY=your_browser_js_key
+AMAP_SECURITY_JS_CODE=your_browser_security_code
+SQLITE_PATH=/absolute/path/to/where_to_eat.db
+RECOMMENDATION_PREWARM_ENABLED=false
+```
+
+高德服务端搜索使用 Web 服务 Key，浏览器底图使用 JS API Key 和对应安全配置。请在高德控制台配置适用域名及权限。无有效密钥时仍可手动记餐。浏览器地图配置按 SDK 要求下发，不要复用服务端密钥；不要提交 `.env`。
+
+## 分享边界
+
+记录默认仅账号本人可见，只有选中的自有记录进入分享快照。完整分享码仅生成时显示一次，服务端只保存哈希。请妥善保存并仅交给信任的人；持码且已登录的人均可预览和导入，并非绑定指定收件人。
+
+修改原记录不会改变已有快照。撤销或过期阻止后续预览和导入，但不会删除已导入的副本。删除原记录会撤销包含它的分享，也不会召回副本。同一来源记录经不同分享码重复导入会去重，不覆盖已保留版本。
+
+分享码只在同一部署及其数据库内有效。跨设备和远程朋友访问需要共同可达的服务地址；localhost 不能直接给远程朋友使用，也不会自动连接其他独立安装。
+
+## 部署与安全
+
+- 生产环境先构建前端，通过 HTTPS 反向代理提供同源页面和 API；数据库放在持久化目录。
+- 会话使用 HttpOnly、SameSite=Strict Cookie，HTTPS 下设置 Secure，默认有效期 30 天。
+- 代理须正确转发 Host 和协议，Uvicorn 仅信任实际代理来源，否则会影响同源校验和安全 Cookie。
+- 应用层限流保存在单进程内；多进程或公网部署需要代理层限流及滥用防护。
+- 当前没有邮箱验证、找回密码、修改密码或账号删除功能。
+- 账号隔离不是端到端加密；服务器与数据库管理员仍能读取数据。不要记录敏感个人信息。
+- SQLite 适合小规模使用，扩展部署前需规划共享存储、迁移与备份。
+
+## 数据与备份
+
+新数据位于 SQLite 的 `library_*` 表。旧餐厅和匿名评论保留，不自动归属给任何账号。旧公开推荐、餐厅详情和反馈 API 已废弃并要求管理员令牌；旧管理与导入 API 保留，前端不再提供公共评论流程。
+
+备份整个数据库才能保留账号、记录、会话和分享：
 
 ```bash
-cd "/Users/lucent/PycharmProjects/Where-To-Eat-"
-uv run python scripts/bootstrap_demo.py
+sqlite3 data/where_to_eat.db ".backup '/safe/path/where_to_eat_backup.db'"
 ```
 
-这个脚本会：
+如配置了 `SQLITE_PATH`，替换为实际路径。备份目录需预先存在，限制访问权限：备份包含私人内容及凭据哈希。恢复前停止服务、保留现有数据库副本，再恢复到配置路径并核对文件权限。
 
-- 初始化 SQLite 表
-- 预热 mock 餐厅缓存
+旧 `scripts/sqlite_backup.py` 只导出历史餐厅与评论，不包含个人库数据，不能用作当前产品的完整备份。
 
-它不会清空你已有的导入评论。
-
-## Experimental Review Fetch Script
-
-如果你想把“自动抓取评价”与现有导入链路分开，可以使用：
+## 验证
 
 ```bash
-cd "/Users/lucent/PycharmProjects/Where-To-Eat-"
-uv run python scripts/fetch_reviews_experimental.py \
-  --restaurant-id r001 \
-  --url 'https://example.com/restaurant-page' \
-  --output /tmp/r001_reviews.json
+uv run python -m pytest tests -q
+npm --prefix frontend test
+npm --prefix frontend run build
+cd frontend
+npx playwright install chromium
+npm run test:e2e
 ```
 
-如果只是先离线实验，也可以先保存 HTML 再解析：
+端到端测试使用隔离临时数据库和两个账号，覆盖记录、选定分享、预览导入、权限隔离、撤销和手机布局。真实高德请求依赖密钥权限与外部网络，不由离线测试保证。
 
-```bash
-uv run python scripts/fetch_reviews_experimental.py \
-  --restaurant-id r001 \
-  --html-file /path/to/page.html \
-  --import-to-db
-```
+## 项目结构
 
-说明：
-
-- 这是实验脚本，不会修改推荐主链路
-- 当前优先尝试从页面里的 `application/ld+json` 或内联 JSON 提取评论
-- 输出格式会对齐现有评论导入接口
-- 如果传入 `--import-to-db`，脚本会复用项目当前的评论导入服务写入 SQLite
-
-## Run
-
-```bash
-cd "/Users/lucent/PycharmProjects/Where-To-Eat-"
-uv run uvicorn app.main:app --reload
-```
-
-启动后可访问：
-
-- `/` 首页筛选
-- `/recommendations` 推荐榜单
-- `/map-view` 地图视图
-- `/restaurant-view?id=r001` 店铺详情
-- `/review-import?id=r001` 评论导入页
-- `/admin` 后台管理页
-- `/docs` FastAPI Swagger 文档
-
-## Main APIs
-
-```text
-POST /api/recommend/restaurants
-GET  /api/restaurants/{restaurant_id}
-POST /api/reviews/feedback
-POST /api/reviews/import
-GET  /api/admin/dashboard
-GET  /health
-```
-
-## Review Feedback
-
-在 `/restaurant-view?id=r001` 页面里，用户可以直接：
-
-- 选择一个口语化态度档位
-- 填写一句真实评论
-- 提交后立即出现在这家店的评论区里
-
-## Review Import Format
-
-你可以在 `/review-import` 页面里：
-
-- 直接粘贴 JSON / CSV
-- 选择本地 `.json` / `.csv` 文件后自动载入
-
-导入后会立即刷新这家店的评论概况。
-
-默认导入方式为“追加并去重”。如果需要重建某家店的历史评论，可以在导入页选择“覆盖旧评论”。
-
-JSON:
-
-```json
-[
-  { "rating": 5, "content": "羊肉串很香，分量足", "days_ago": 1 },
-  { "rating": 2, "content": "高峰排队久", "days_ago": 3 }
-]
-```
-
-CSV:
-
-```csv
-rating,content,days_ago
-5,红烧肉下饭，价格友好,1
-4,适合一个人吃，出餐快,2
-```
-
-## Notes
-
-- `data/where_to_eat.db` 是本地 SQLite 数据库，已加入 `.gitignore`
-- 依赖版本由 `uv.lock` 锁定，日常安装与同步请使用 `uv sync`
-- 导入评论和缓存餐厅都会写入 SQLite
-- 当前评论来源仍以 mock 与导入数据为主，真实平台评论抓取尚未接入
-- 当前前端为静态页面方案，适合原型、实习项目演示和快速联调
+- `app/api/library.py`：账号、个人库、分享与附近餐厅 API。
+- `app/services/library_service.py`：账号隔离、持久化、分享快照与导入去重。
+- `frontend/src/library/`：React 个人库、表单、分享与地图界面。
+- `PRODUCT.md`：产品定位；`CONTEXT.md`：领域术语。
+- `/docs`：FastAPI 接口文档；`/health`：健康检查。
+- `docs/legacy-public-reviews.md`：旧版历史说明，不作为当前运行指南。
