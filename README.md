@@ -1,37 +1,32 @@
 # Where To Eat
 
-一个面向大学生的校园餐厅真实评论平台原型。
+基于 FastAPI、静态前端和 SQLite 的校园餐厅检索与评价原型。当前默认分支为 Python 实现。
 
-当前项目已经包含：
+## 功能
+
+本版本提供：
 
 - 首页筛选、推荐榜单、地图视图、店铺详情
 - 评论导入页与后台管理页
-- 店铺详情页支持用户直接提交真实评论并即时刷新页面概况
+- 店铺详情页支持用户直接提交用户评论并即时刷新页面概况
 - 支持本地 JSON / CSV 文件导入评论
 - 餐厅基础信息缓存
 - 评论导入持久化
 - 高德周边搜索接入骨架
 - 无高德 Key 时的 mock 回退链路
 
-## Tech Stack
+## 技术栈
 
 - Backend: FastAPI
 - Frontend: FastAPI 静态页面
 - Storage: SQLite
 - Config: python-dotenv
 
-## Product Positioning
+## 数据来源
 
-这个项目的核心不是“附近有什么吃的”，而是“学校附近这家店，最近大家到底怎么说”。
+餐厅数据来自地图服务或本地演示数据；评论来自用户提交及 JSON / CSV 导入。用户提交内容未经第三方平台验证，不等同于已核验消费评价。页面评论概况基于当前已存储数据。
 
-系统目前支持两类评论来源：
-
-- 用户在店铺详情页直接提交真实评论
-- 管理端或运营侧通过 JSON / CSV 批量补录历史评论
-
-提交后会立即进入 SQLite，并更新这家店的评论概况，逐步形成校园内自己的餐厅评论池。
-
-## Project Structure
+## 目录结构
 
 ```text
 app/
@@ -51,7 +46,7 @@ data/
   where_to_eat.db     SQLite 数据库文件
 ```
 
-## Environment
+## 环境配置
 
 可选 `.env` 配置：
 
@@ -76,28 +71,29 @@ ADMIN_TOKEN=change_this_for_local_admin
 
 默认情况下，系统不会再使用预置 mock 评论参与页面展示判断。
 
-- `USE_MOCK_REVIEW_FALLBACK=false`：仅使用用户提交 / 导入的真实评论
+- `USE_MOCK_REVIEW_FALLBACK=false`：仅使用用户提交 / 导入的用户评论
 - `USE_MOCK_REVIEW_FALLBACK=true`：开发演示时允许回退到 mock 评论
 - `ADMIN_TOKEN`：访问后台管理 API 和清空试运行数据时需要在后台页输入的管理令牌
 
-## Setup
+## 安装
 
 项目当前使用 `uv` 管理依赖与虚拟环境。首次进入项目后执行：
 
 ```bash
-cd "/Users/lucent/PycharmProjects/Where-To-Eat-"
+git clone https://github.com/Arcdiverrr1026/Where-To-Eat-.git
+cd Where-To-Eat-
 uv sync
 ```
 
 这会根据 `pyproject.toml` 和仓库内提交的 `uv.lock` 创建或更新 `.venv` 并安装依赖。
 如果依赖声明有调整，重新执行一次 `uv sync` 即可。
 
-## Bootstrap Demo Data
+## 演示数据初始化
 
 首次启动前，建议先执行一次：
 
 ```bash
-cd "/Users/lucent/PycharmProjects/Where-To-Eat-"
+cd Where-To-Eat-
 uv run python scripts/bootstrap_demo.py
 ```
 
@@ -108,12 +104,12 @@ uv run python scripts/bootstrap_demo.py
 
 它不会清空你已有的导入评论。
 
-## Experimental Review Fetch Script
+## 实验性评论导入
 
 如果你想把“自动抓取评价”与现有导入链路分开，可以使用：
 
 ```bash
-cd "/Users/lucent/PycharmProjects/Where-To-Eat-"
+cd Where-To-Eat-
 uv run python scripts/fetch_reviews_experimental.py \
   --restaurant-id r001 \
   --url 'https://example.com/restaurant-page' \
@@ -136,10 +132,10 @@ uv run python scripts/fetch_reviews_experimental.py \
 - 输出格式会对齐现有评论导入接口
 - 如果传入 `--import-to-db`，脚本会复用项目当前的评论导入服务写入 SQLite
 
-## Run
+## 启动
 
 ```bash
-cd "/Users/lucent/PycharmProjects/Where-To-Eat-"
+cd Where-To-Eat-
 uv run uvicorn app.main:app --reload
 ```
 
@@ -153,7 +149,7 @@ uv run uvicorn app.main:app --reload
 - `/admin` 后台管理页
 - `/docs` FastAPI Swagger 文档
 
-## Main APIs
+## 主要接口
 
 ```text
 POST /api/recommend/restaurants
@@ -164,15 +160,15 @@ GET  /api/admin/dashboard
 GET  /health
 ```
 
-## Review Feedback
+## 评论提交
 
 在 `/restaurant-view?id=r001` 页面里，用户可以直接：
 
 - 选择一个口语化态度档位
-- 填写一句真实评论
+- 填写一句用户评论
 - 提交后立即出现在这家店的评论区里
 
-## Review Import Format
+## 评论导入格式
 
 你可以在 `/review-import` 页面里：
 
@@ -200,7 +196,7 @@ rating,content,days_ago
 4,适合一个人吃，出餐快,2
 ```
 
-## Notes
+## 数据与运行边界
 
 - `data/where_to_eat.db` 是本地 SQLite 数据库，已加入 `.gitignore`
 - 依赖版本由 `uv.lock` 锁定，日常安装与同步请使用 `uv sync`
