@@ -1,0 +1,210 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "AMap subset for isolated tests",
+    "version": "1.0.0",
+    "description": "Synthetic examples for tests only. Based on https://lbs.amap.com/api/webservice/guide/api-advanced/newpoisearch and /api/webservice/guide/api/georegeo. Never seeded into the application database."
+  },
+  "servers": [
+    {
+      "url": "https://restapi.amap.com"
+    }
+  ],
+  "paths": {
+    "/v5/place/around": {
+      "get": {
+        "summary": "AMap nearby search",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "location",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "radius",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "keywords",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "types",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page_num",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortrule",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "show_fields",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Provider response. Empty arrays and status=0 also possible.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "pois": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "geocodes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "status": "1",
+                  "count": "2",
+                  "pois": [
+                    {
+                      "id": "TEST_ONLY_A",
+                      "name": "测试夹具 A（非真实餐厅）",
+                      "address": "仅限隔离测试",
+                      "type": "餐饮服务;中餐厅",
+                      "location": "121.473800,31.230400",
+                      "business": {
+                        "cost": "38",
+                        "opentime_today": "10:00-21:00",
+                        "tel": ""
+                      }
+                    },
+                    {
+                      "id": "TEST_ONLY_B",
+                      "name": "测试夹具 B（非真实餐厅）",
+                      "address": "仅限隔离测试",
+                      "type": "餐饮服务;中餐厅",
+                      "location": "121.474000,31.230500",
+                      "business": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/geocode/geo": {
+      "get": {
+        "summary": "AMap geocoding",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "address",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Provider response. Empty arrays and status=0 also possible.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "pois": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "geocodes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "status": "1",
+                  "geocodes": [
+                    {
+                      "formatted_address": "隔离测试位置",
+                      "location": "121.473700,31.230400"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "where-to-eat",
+  "version": "2.0.0",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev": "npm run dev --workspace frontend",
+    "dev:api": "node --env-file-if-exists=.env --watch scripts/dev-api.mjs",
+    "db:init": "node --env-file-if-exists=.env backend/src/init-db.js",
+    "build": "npm run build --workspace frontend",
+    "test": "node --test tests/unit.test.js",
+    "test:integration": "node scripts/test-integration.mjs",
+    "lint": "eslint .",
+    "format": "prettier --write backend/src frontend/src tests scripts docs/*.md *.json *.md",
+    "test:smoke": "node --env-file-if-exists=.env scripts/smoke.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "type": "module",
+  "devDependencies": {
+    "eslint": "^9.39.0",
+    "@eslint/js": "^9.39.0",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "prettier": "^3.6.2"
+  }
+}

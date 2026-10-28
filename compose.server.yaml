@@ -1,0 +1,18 @@
+# Independent remote deployment, behind the existing host nginx.
+name: where_to_eat
+services:
+  db:
+    mem_limit: 192m
+  api:
+    image: where_to_eat-api:server
+    environment:
+      COOKIE_PATH: /where_to_eat/
+    mem_limit: 192m
+  web:
+    image: where_to_eat-web:server
+    build:
+      args:
+        APP_BASE: /where_to_eat/
+    ports: !override
+      - '127.0.0.1:8081:80'
+    mem_limit: 64m

@@ -1,0 +1,17 @@
+name: where-to-eat-test
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: wte_test
+      POSTGRES_PASSWORD: test-only-password
+      POSTGRES_DB: where_to_eat_test
+    ports:
+      - '127.0.0.1:55439:5432'
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U wte_test -d where_to_eat_test']
+      interval: 2s
+      timeout: 2s
+      retries: 15

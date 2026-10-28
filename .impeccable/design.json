@@ -1,0 +1,435 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-27T14:37:00.483375+00:00",
+  "title": "Design System: Where To Eat",
+  "extensions": {
+    "colorMeta": {
+      "forest": {
+        "role": "primary",
+        "displayName": "Forest",
+        "tonalRamp": [
+          "oklch(15% 0.0479 176.09)",
+          "oklch(26% 0.0479 176.09)",
+          "oklch(38% 0.0479 176.09)",
+          "oklch(49% 0.0479 176.09)",
+          "oklch(61% 0.0479 176.09)",
+          "oklch(72% 0.0479 176.09)",
+          "oklch(84% 0.0479 176.09)",
+          "oklch(95% 0.0479 176.09)"
+        ]
+      },
+      "green": {
+        "role": "primary",
+        "displayName": "Green",
+        "tonalRamp": [
+          "oklch(15% 0.0788 162.14)",
+          "oklch(26% 0.0788 162.14)",
+          "oklch(38% 0.0788 162.14)",
+          "oklch(49% 0.0788 162.14)",
+          "oklch(61% 0.0788 162.14)",
+          "oklch(72% 0.0788 162.14)",
+          "oklch(84% 0.0788 162.14)",
+          "oklch(95% 0.0788 162.14)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted",
+        "tonalRamp": [
+          "oklch(15% 0.0256 163.81)",
+          "oklch(26% 0.0256 163.81)",
+          "oklch(38% 0.0256 163.81)",
+          "oklch(49% 0.0256 163.81)",
+          "oklch(61% 0.0256 163.81)",
+          "oklch(72% 0.0256 163.81)",
+          "oklch(84% 0.0256 163.81)",
+          "oklch(95% 0.0256 163.81)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Line",
+        "tonalRamp": [
+          "oklch(15% 0.0165 142.55)",
+          "oklch(26% 0.0165 142.55)",
+          "oklch(38% 0.0165 142.55)",
+          "oklch(49% 0.0165 142.55)",
+          "oklch(61% 0.0165 142.55)",
+          "oklch(72% 0.0165 142.55)",
+          "oklch(84% 0.0165 142.55)",
+          "oklch(95% 0.0165 142.55)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.88)",
+          "oklch(26% 0.0000 89.88)",
+          "oklch(38% 0.0000 89.88)",
+          "oklch(49% 0.0000 89.88)",
+          "oklch(61% 0.0000 89.88)",
+          "oklch(72% 0.0000 89.88)",
+          "oklch(84% 0.0000 89.88)",
+          "oklch(95% 0.0000 89.88)"
+        ]
+      },
+      "lime": {
+        "role": "primary",
+        "displayName": "Lime",
+        "tonalRamp": [
+          "oklch(15% 0.1274 120.59)",
+          "oklch(26% 0.1274 120.59)",
+          "oklch(38% 0.1274 120.59)",
+          "oklch(49% 0.1274 120.59)",
+          "oklch(61% 0.1274 120.59)",
+          "oklch(72% 0.1274 120.59)",
+          "oklch(84% 0.1274 120.59)",
+          "oklch(95% 0.1274 120.59)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "tonalRamp": [
+          "oklch(15% 0.0333 171.20)",
+          "oklch(26% 0.0333 171.20)",
+          "oklch(38% 0.0333 171.20)",
+          "oklch(49% 0.0333 171.20)",
+          "oklch(61% 0.0333 171.20)",
+          "oklch(72% 0.0333 171.20)",
+          "oklch(84% 0.0333 171.20)",
+          "oklch(95% 0.0333 171.20)"
+        ]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Canvas",
+        "tonalRamp": [
+          "oklch(15% 0.0061 137.77)",
+          "oklch(26% 0.0061 137.77)",
+          "oklch(38% 0.0061 137.77)",
+          "oklch(49% 0.0061 137.77)",
+          "oklch(61% 0.0061 137.77)",
+          "oklch(72% 0.0061 137.77)",
+          "oklch(84% 0.0061 137.77)",
+          "oklch(95% 0.0061 137.77)"
+        ]
+      },
+      "filter-surface": {
+        "role": "neutral",
+        "displayName": "Filter Surface",
+        "tonalRamp": [
+          "oklch(15% 0.0159 130.42)",
+          "oklch(26% 0.0159 130.42)",
+          "oklch(38% 0.0159 130.42)",
+          "oklch(49% 0.0159 130.42)",
+          "oklch(61% 0.0159 130.42)",
+          "oklch(72% 0.0159 130.42)",
+          "oklch(84% 0.0159 130.42)",
+          "oklch(95% 0.0159 130.42)"
+        ]
+      },
+      "scope-surface": {
+        "role": "neutral",
+        "displayName": "Scope Surface",
+        "tonalRamp": [
+          "oklch(15% 0.0057 128.52)",
+          "oklch(26% 0.0057 128.52)",
+          "oklch(38% 0.0057 128.52)",
+          "oklch(49% 0.0057 128.52)",
+          "oklch(61% 0.0057 128.52)",
+          "oklch(72% 0.0057 128.52)",
+          "oklch(84% 0.0057 128.52)",
+          "oklch(95% 0.0057 128.52)"
+        ]
+      },
+      "field-line": {
+        "role": "neutral",
+        "displayName": "Field Line",
+        "tonalRamp": [
+          "oklch(15% 0.0281 145.31)",
+          "oklch(26% 0.0281 145.31)",
+          "oklch(38% 0.0281 145.31)",
+          "oklch(49% 0.0281 145.31)",
+          "oklch(61% 0.0281 145.31)",
+          "oklch(72% 0.0281 145.31)",
+          "oklch(84% 0.0281 145.31)",
+          "oklch(95% 0.0281 145.31)"
+        ]
+      },
+      "focus": {
+        "role": "neutral",
+        "displayName": "Focus",
+        "tonalRamp": [
+          "oklch(15% 0.1215 129.25)",
+          "oklch(26% 0.1215 129.25)",
+          "oklch(38% 0.1215 129.25)",
+          "oklch(49% 0.1215 129.25)",
+          "oklch(61% 0.1215 129.25)",
+          "oklch(72% 0.1215 129.25)",
+          "oklch(84% 0.1215 129.25)",
+          "oklch(95% 0.1215 129.25)"
+        ]
+      },
+      "warning-ink": {
+        "role": "neutral",
+        "displayName": "Warning Ink",
+        "tonalRamp": [
+          "oklch(15% 0.0770 80.69)",
+          "oklch(26% 0.0770 80.69)",
+          "oklch(38% 0.0770 80.69)",
+          "oklch(49% 0.0770 80.69)",
+          "oklch(61% 0.0770 80.69)",
+          "oklch(72% 0.0770 80.69)",
+          "oklch(84% 0.0770 80.69)",
+          "oklch(95% 0.0770 80.69)"
+        ]
+      },
+      "warning-surface": {
+        "role": "neutral",
+        "displayName": "Warning Surface",
+        "tonalRamp": [
+          "oklch(15% 0.0290 89.57)",
+          "oklch(26% 0.0290 89.57)",
+          "oklch(38% 0.0290 89.57)",
+          "oklch(49% 0.0290 89.57)",
+          "oklch(61% 0.0290 89.57)",
+          "oklch(72% 0.0290 89.57)",
+          "oklch(84% 0.0290 89.57)",
+          "oklch(95% 0.0290 89.57)"
+        ]
+      },
+      "error-ink": {
+        "role": "neutral",
+        "displayName": "Error Ink",
+        "tonalRamp": [
+          "oklch(15% 0.1209 29.27)",
+          "oklch(26% 0.1209 29.27)",
+          "oklch(38% 0.1209 29.27)",
+          "oklch(49% 0.1209 29.27)",
+          "oklch(61% 0.1209 29.27)",
+          "oklch(72% 0.1209 29.27)",
+          "oklch(84% 0.1209 29.27)",
+          "oklch(95% 0.1209 29.27)"
+        ]
+      },
+      "error-surface": {
+        "role": "neutral",
+        "displayName": "Error Surface",
+        "tonalRamp": [
+          "oklch(15% 0.0177 39.40)",
+          "oklch(26% 0.0177 39.40)",
+          "oklch(38% 0.0177 39.40)",
+          "oklch(49% 0.0177 39.40)",
+          "oklch(61% 0.0177 39.40)",
+          "oklch(72% 0.0177 39.40)",
+          "oklch(84% 0.0177 39.40)",
+          "oklch(95% 0.0177 39.40)"
+        ]
+      },
+      "success-ink": {
+        "role": "neutral",
+        "displayName": "Success Ink",
+        "tonalRamp": [
+          "oklch(15% 0.0769 159.45)",
+          "oklch(26% 0.0769 159.45)",
+          "oklch(38% 0.0769 159.45)",
+          "oklch(49% 0.0769 159.45)",
+          "oklch(61% 0.0769 159.45)",
+          "oklch(72% 0.0769 159.45)",
+          "oklch(84% 0.0769 159.45)",
+          "oklch(95% 0.0769 159.45)"
+        ]
+      },
+      "success-surface": {
+        "role": "neutral",
+        "displayName": "Success Surface",
+        "tonalRamp": [
+          "oklch(15% 0.0265 138.30)",
+          "oklch(26% 0.0265 138.30)",
+          "oklch(38% 0.0265 138.30)",
+          "oklch(49% 0.0265 138.30)",
+          "oklch(61% 0.0265 138.30)",
+          "oklch(72% 0.0265 138.30)",
+          "oklch(84% 0.0265 138.30)",
+          "oklch(95% 0.0265 138.30)"
+        ]
+      },
+      "secondary-surface": {
+        "role": "neutral",
+        "displayName": "Secondary Surface",
+        "tonalRamp": [
+          "oklch(15% 0.0135 134.90)",
+          "oklch(26% 0.0135 134.90)",
+          "oklch(38% 0.0135 134.90)",
+          "oklch(49% 0.0135 134.90)",
+          "oklch(61% 0.0135 134.90)",
+          "oklch(72% 0.0135 134.90)",
+          "oklch(84% 0.0135 134.90)",
+          "oklch(95% 0.0135 134.90)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page question and primary heading."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section heading."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Restaurant name."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Base system type; contextual copy overrides size."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Semibold form labels."
+      },
+      "control": {
+        "displayName": "Control",
+        "purpose": "Native form control text."
+      },
+      "hint": {
+        "displayName": "Hint",
+        "purpose": "Muted support copy."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "control-transition",
+        "value": "background-color 0.16s, color 0.16s",
+        "purpose": "Link and button state changes."
+      },
+      {
+        "name": "results-reveal",
+        "value": "reveal 0.2s ease-out",
+        "purpose": "Clip-path inset(0 0 12px) to inset(0) on restaurant-list entry."
+      },
+      {
+        "name": "loading-spin",
+        "value": "spin 1s linear infinite",
+        "purpose": "Loading icon rotation; all motion disabled under prefers-reduced-motion: reduce."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact-max",
+        "value": "760px"
+      },
+      {
+        "name": "medium-max",
+        "value": "900px"
+      },
+      {
+        "name": "sticky-filter-min",
+        "value": "1100px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Compact action; disabled style matches application.",
+      "html": "<button class=\"ds-primary\">保存</button>",
+      "css": ".ds-primary{min-height:43px;border:0;border-radius:7px;padding:10px 17px;font:600 14px -apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;cursor:pointer;transition:background-color .16s,color .16s;background:var(--forest,#163e35);color:#fff;} .ds-primary:hover{background:#2d6049;} .ds-primary:focus-visible{outline:3px solid var(--focus,#688d38);outline-offset:4px} .ds-primary:disabled{opacity:.55;cursor:not-allowed;}"
+    },
+    {
+      "name": "Discovery Button",
+      "kind": "button",
+      "refersTo": "button-search",
+      "description": "Compact action; disabled style matches application.",
+      "html": "<button class=\"ds-search\">看看附近吃什么</button>",
+      "css": ".ds-search{min-height:43px;border:0;border-radius:7px;padding:10px 17px;font:600 14px -apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;cursor:pointer;transition:background-color .16s,color .16s;background:var(--lime,#d4ed8a);color:#28421e;} .ds-search:hover{background:#c3e373;} .ds-search:focus-visible{outline:3px solid var(--focus,#688d38);outline-offset:4px} .ds-search:disabled{opacity:.55;cursor:not-allowed;}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Compact action; disabled style matches application.",
+      "html": "<button class=\"ds-secondary\">放宽筛选条件</button>",
+      "css": ".ds-secondary{min-height:43px;border:0;border-radius:7px;padding:10px 17px;font:600 14px -apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;cursor:pointer;transition:background-color .16s,color .16s;background:#e8eee5;color:var(--forest,#163e35);} .ds-secondary:hover{background:#d9e5d3;} .ds-secondary:focus-visible{outline:3px solid var(--focus,#688d38);outline-offset:4px} .ds-secondary:disabled{opacity:.55;cursor:not-allowed;}"
+    },
+    {
+      "name": "Text Action",
+      "kind": "button",
+      "description": "Quiet utility action with hover underline.",
+      "html": "<button class=\"ds-text\">重新检查</button>",
+      "css": ".ds-text{background:transparent;border:0;color:var(--green,#246348);padding:5px 0;font:13px -apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;cursor:pointer;transition:color .16s,background-color .16s}.ds-text:hover{text-decoration:underline;text-underline-offset:4px}.ds-text:focus-visible{outline:3px solid var(--focus,#688d38);outline-offset:4px}"
+    },
+    {
+      "name": "Labeled Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Native field with explicit label.",
+      "html": "<label class=\"ds-label\" for=\"ds-location\">在哪里吃<input class=\"ds-field\" id=\"ds-location\" placeholder=\"输入附近地标\"></label>",
+      "css": ".ds-label{font:600 13px -apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;color:#243c34}.ds-field{display:block;width:100%;background:#fff;border:1px solid #b9c9b9;border-radius:7px;padding:11px 12px;margin-top:8px;color:#243c34;font:14px -apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;caret-color:var(--green,#246348)}.ds-field::placeholder{color:#6b796e;font-size:12px}.ds-field:hover{border-color:#789476}.ds-field:focus-visible{outline:3px solid var(--focus,#688d38);outline-offset:4px}"
+    },
+    {
+      "name": "Current Navigation",
+      "kind": "nav",
+      "description": "Current-page block and lime underline.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"主导航\"><a href=\"#/\" aria-current=\"page\">发现附近</a><a href=\"#/favorites\">我的收藏</a></nav>",
+      "css": ".ds-nav{display:flex;gap:16px;background:var(--forest,#163e35);height:70px;font:14px -apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif}.ds-nav a{display:flex;align-items:center;color:#cfddd3;text-decoration:none;padding:0 16px;position:relative;transition:background-color .16s,color .16s}.ds-nav a[aria-current]{color:#efffc7;background:#204c3e}.ds-nav a[aria-current]:after{content:\"\";position:absolute;bottom:0;left:16px;right:16px;height:3px;background:var(--lime,#d4ed8a)}.ds-nav a:hover{background:#285342}.ds-nav a:focus-visible{outline:3px solid var(--focus,#688d38);outline-offset:4px}"
+    },
+    {
+      "name": "State Label",
+      "kind": "chip",
+      "description": "Informational admin badge, not a selectable filter.",
+      "html": "<span class=\"ds-state\">显示中</span>",
+      "css": ".ds-state{display:inline-block;font:11px -apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;padding:4px 9px;background:#e7efdf;color:#3b6339;border-radius:5px}"
+    },
+    {
+      "name": "Empty Results Panel",
+      "kind": "card",
+      "refersTo": "results-panel",
+      "description": "Initial empty state; contains no invented restaurant data.",
+      "html": "<section class=\"ds-panel\"><div class=\"ds-panel-heading\">附近好去处</div><div class=\"ds-empty\"><h2>先选一个就餐位置</h2><p>输入附近地标，或使用当前位置。</p></div></section>",
+      "css": ".ds-panel{background:var(--surface,#fff);border-radius:12px;overflow:hidden;color:#243c34;font-family:-apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif}.ds-panel-heading{font-size:18px;font-weight:700;padding:25px 28px 20px;border-bottom:1px solid var(--line,#dce5db)}.ds-empty{padding:78px 28px;text-align:center}.ds-empty h2{font-size:21px;font-weight:600;margin:0 0 18px}.ds-empty p{font-size:14px;line-height:1.8;color:var(--muted,#5f7168);margin:0}"
+    },
+    {
+      "name": "Unavailable Notice",
+      "kind": "custom",
+      "description": "Status communicates missing configuration with written explanation.",
+      "html": "<div class=\"ds-notice\" role=\"status\"><strong>地图服务尚未配置</strong><p>暂时无法搜索真实餐厅，请联系维护者完成配置后重试。</p></div>",
+      "css": ".ds-notice{padding:16px 20px;border-radius:10px;color:#6b501c;background:#f5edd8;font:14px -apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif}.ds-notice strong{display:block;font-size:14px}.ds-notice p{color:#75613c;font-size:13px;line-height:1.75;margin:0}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Neighborhood Wayfinding",
+    "overview": "A practical neighborhood wayfinding system: forest navigation frames a pale, readable work surface. Soft green groups controls, while lime marks the discovery action. Familiar Chinese forms and clear list hierarchy help people compare real information quickly.\n\nThe visual system is code-led: system fonts, line icons, tonal panels, and native controls. No shipping raster assets are required. The useful character comes from alignment, legible labels, and honest states.",
+    "keyCharacteristics": [
+      "Light, readable work surfaces within a forest-green shell.",
+      "List-first comparison with restrained line icons.",
+      "Clearly labeled controls and truthful empty, unavailable, and error states."
+    ],
+    "rules": [
+      {
+        "name": "The Useful Accent Rule",
+        "body": "Use lime for orientation and the discovery action; keep longer reading areas neutral.",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "Do keep the search scope and recommendation reasons visibly labeled.",
+      "Do use the shared focus treatment and preserve native form semantics.",
+      "Do keep unknown prices and missing data explicit.",
+      "Do adapt filters before results on compact screens."
+    ],
+    "donts": [
+      "Don't turn the application into a promotional landing page.",
+      "Don't use restaurant imagery or invented reviews to fill unavailable states.",
+      "Don't add decorative shadows or literal park-sign ornament.",
+      "Don't treat the compact screenshot as proof of a 390px phone layout."
+    ]
+  }
+}

@@ -6,3 +6,15 @@ __pycache__/
 .env
 .DS_Store
 /data/
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+.postman/
+postman/.dependencies/
+.impeccable/review/
+*.ndjson
+
+.env.*
+!.env.example

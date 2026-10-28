@@ -1,0 +1,11 @@
+version: 1
+id: 277c5d78-aa25-419d-80a0-cd36fbde2116
+name: amap
+slug: amap
+protocol: http
+interceptRequests: true
+port: 4500
+scenarios:
+  - name: default
+    path: ./default.js
+    default: true
